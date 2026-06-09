@@ -163,12 +163,13 @@ function normalizeTags(value: unknown): StudyTag[] {
     return DEFAULT_TAGS;
   }
 
-  const customTags: StudyTag[] = [];
-  const usedNames = new Set(DEFAULT_TAGS.map((tag) => tag.name.toLowerCase()));
-  const usedIds = new Set(DEFAULT_TAGS.map((tag) => tag.id));
+  const tags: StudyTag[] = [];
+  const usedNames = new Set<string>();
+  const usedIds = new Set<string>();
+  let customTagCount = 0;
 
   for (const item of value) {
-    if (!isRecord(item) || item.isDefault === true) {
+    if (!isRecord(item)) {
       continue;
     }
 
@@ -178,6 +179,7 @@ function normalizeTags(value: unknown): StudyTag[] {
       typeof item.id === "string" ? item.id.trim().slice(0, 80) : "";
     const color = typeof item.color === "string" ? item.color.trim() : "";
     const normalizedName = name.toLowerCase();
+    const isDefault = DEFAULT_TAGS.some((tag) => tag.id === id);
 
     if (
       !name ||
@@ -185,22 +187,26 @@ function normalizeTags(value: unknown): StudyTag[] {
       usedNames.has(normalizedName) ||
       usedIds.has(id) ||
       !isHexColor(color) ||
-      customTags.length >= maxCustomTags
+      (!isDefault && customTagCount >= maxCustomTags)
     ) {
       continue;
     }
 
     usedNames.add(normalizedName);
     usedIds.add(id);
-    customTags.push({
+    tags.push({
       id,
       name,
       color,
-      isDefault: false,
+      isDefault,
     });
+
+    if (!isDefault) {
+      customTagCount += 1;
+    }
   }
 
-  return [...DEFAULT_TAGS, ...customTags];
+  return tags.length > 0 ? tags : DEFAULT_TAGS;
 }
 
 function normalizeStudySessions(

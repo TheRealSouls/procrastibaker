@@ -19,6 +19,7 @@ export function TagSelector({
   const [tagColor, setTagColor] = useState(fallbackTagColor);
   const [error, setError] = useState("");
   const customTagCount = tags.filter((tag) => !tag.isDefault).length;
+  const canDeleteTags = tags.length > 1;
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -57,15 +58,20 @@ export function TagSelector({
   function deleteTag(tagId: string) {
     const tag = tags.find((item) => item.id === tagId);
 
-    if (!tag || tag.isDefault) {
+    if (!tag) {
+      return;
+    }
+
+    if (!canDeleteTags) {
+      setError("You need at least one study tag.");
       return;
     }
 
     const nextTags = tags.filter((item) => item.id !== tagId);
-    const fallbackTagId =
-      nextTags.find((item) => item.isDefault)?.id ?? nextTags[0]?.id;
+    const fallbackTagId = nextTags[0]?.id;
 
     onTagsChange(nextTags);
+    setError("");
 
     if (selectedTagId === tagId && fallbackTagId) {
       onChange(fallbackTagId);
@@ -149,17 +155,24 @@ export function TagSelector({
                 <span className="tag-dot" aria-hidden="true" />
                 <span>{tag.name}</span>
               </span>
-              {tag.isDefault ? (
-                <span className="tag-protected">Built-in</span>
-              ) : (
-                <button
-                  className="button tag-delete-button"
-                  onClick={() => deleteTag(tag.id)}
-                  type="button"
-                >
-                  Delete
-                </button>
-              )}
+              <button
+                aria-label={
+                  canDeleteTags
+                    ? `Delete ${tag.name} tag`
+                    : "Cannot delete the last study tag"
+                }
+                className="button tag-delete-button"
+                disabled={!canDeleteTags}
+                onClick={() => deleteTag(tag.id)}
+                title={
+                  canDeleteTags
+                    ? `Delete ${tag.name}`
+                    : "You need at least one study tag"
+                }
+                type="button"
+              >
+                Delete
+              </button>
             </div>
           ))}
         </div>

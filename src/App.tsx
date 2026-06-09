@@ -283,7 +283,7 @@ export function App() {
     try {
       await logout();
       setAppState((current) => ({ ...current, user: null }));
-      setView("login");
+      setView("home");
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : "Sign out failed.");
     } finally {

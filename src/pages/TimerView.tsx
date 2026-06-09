@@ -80,8 +80,7 @@ export function TimerView({
     pastries[0];
   const bakingPastry =
     pastries.find((pastry) => pastry.id === sessionPastryId) ?? selectedPastry;
-  const fallbackTag =
-    state.tags.find((tag) => tag.isDefault) ?? DEFAULT_TAGS[0];
+  const fallbackTag = state.tags[0] ?? DEFAULT_TAGS[0];
   const selectedTag =
     findTagById(state.tags, selectedTagId) ?? fallbackTag;
   const progress = Math.round(
@@ -307,13 +306,15 @@ export function TimerView({
   }
 
   function changeTags(nextTags: StudyTag[]) {
-    onTagsChange(nextTags);
+    if (nextTags.length === 0) {
+      return;
+    }
 
     if (!findTagById(nextTags, selectedTagId)) {
-      setSelectedTagId(
-        nextTags.find((tag) => tag.isDefault)?.id ?? DEFAULT_TAGS[0].id,
-      );
+      setSelectedTagId(nextTags[0].id);
     }
+
+    onTagsChange(nextTags);
   }
 
   function finishSession() {

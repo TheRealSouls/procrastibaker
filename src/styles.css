@@ -931,12 +931,6 @@ label,
   font-weight: 900;
 }
 
-.tag-protected {
-  color: rgba(59, 36, 22, 0.62);
-  font-size: 0.88rem;
-  font-weight: 900;
-}
-
 .tag-delete-button {
   min-height: 32px;
   padding: 0.42rem 0.65rem;
