@@ -2,6 +2,7 @@ type DeveloperToolsProps = {
   onAddCoins: () => void;
   onAddDemoCompletedSessions: () => void;
   onAddDemoExpiredSessions: () => void;
+  onFinishTestSession: () => void;
   onResetData: () => void;
 };
 
@@ -9,6 +10,7 @@ export function DeveloperTools({
   onAddCoins,
   onAddDemoCompletedSessions,
   onAddDemoExpiredSessions,
+  onFinishTestSession,
   onResetData,
 }: DeveloperToolsProps) {
   return (
@@ -34,6 +36,9 @@ export function DeveloperTools({
         </button>
         <button className="button" onClick={onAddCoins} type="button">
           Add 100 coins
+        </button>
+        <button className="button" onClick={onFinishTestSession} type="button">
+          Finish test study session
         </button>
       </div>
     </details>

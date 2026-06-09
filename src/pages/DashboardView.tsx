@@ -5,12 +5,12 @@ import { StatCard } from "../components/StatCard";
 import { pastries } from "../data/pastries";
 import type { AppState, View } from "../types";
 import { formatMinutes } from "../utils/sessionUtils";
-import { getTotalMinutesByTag } from "../utils/statsUtils";
 
 type DashboardViewProps = {
   onAddCoins: () => void;
   onAddDemoCompletedSessions: () => void;
   onAddDemoExpiredSessions: () => void;
+  onFinishTestSession: () => void;
   state: AppState;
   onNavigate: (view: View) => void;
   onUsernameChange: (username: string) => void;
@@ -21,6 +21,7 @@ export function DashboardView({
   onAddCoins,
   onAddDemoCompletedSessions,
   onAddDemoExpiredSessions,
+  onFinishTestSession,
   state,
   onNavigate,
   onUsernameChange,
@@ -30,9 +31,10 @@ export function DashboardView({
   const selectedPastry =
     pastries.find((pastry) => pastry.id === state.selectedPastryId) ??
     pastries[0];
-  const completedMinutes = Object.values(
-    getTotalMinutesByTag(state.completedSessions),
-  ).reduce((total, minutes) => total + minutes, 0);
+  const completedMinutes = state.completedSessions.reduce(
+    (total, session) => total + session.durationMinutes,
+    0,
+  );
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -165,6 +167,7 @@ export function DashboardView({
         onAddCoins={onAddCoins}
         onAddDemoCompletedSessions={onAddDemoCompletedSessions}
         onAddDemoExpiredSessions={onAddDemoExpiredSessions}
+        onFinishTestSession={onFinishTestSession}
         onResetData={onResetData}
       />
     </div>

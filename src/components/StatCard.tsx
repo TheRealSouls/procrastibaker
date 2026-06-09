@@ -1,4 +1,7 @@
+import type { ReactNode } from "react";
+
 type StatCardProps = {
+  accessory?: ReactNode;
   description?: string;
   label: string;
   value: number | string;
@@ -6,6 +9,7 @@ type StatCardProps = {
 };
 
 export function StatCard({
+  accessory,
   description,
   label,
   value,
@@ -14,9 +18,12 @@ export function StatCard({
   return (
     <article className={`page-card ${variant}-card`}>
       <span>{label}</span>
-      <strong>
-        {typeof value === "number" ? value.toLocaleString() : value}
-      </strong>
+      <div className="stat-card__value-row">
+        {accessory}
+        <strong>
+          {typeof value === "number" ? value.toLocaleString() : value}
+        </strong>
+      </div>
       {description && <p>{description}</p>}
     </article>
   );

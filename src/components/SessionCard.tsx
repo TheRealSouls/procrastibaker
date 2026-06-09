@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { PastryVisual } from "./PastryVisual";
 import { pastries } from "../data/pastries";
 import type { StudySession } from "../types";
@@ -25,9 +26,18 @@ export function SessionCard({ session, variant }: SessionCardProps) {
       />
       <div>
         <h3>{session.pastryName}</h3>
-        <p>
-          {session.tag} - {isExpired ? "planned " : ""}
-          {formatMinutes(session.durationMinutes)}
+        <p className="session-card__meta">
+          <span
+            className="tag-pill"
+            style={{ "--tag-color": session.tagColor } as CSSProperties}
+          >
+            <span className="tag-dot" aria-hidden="true" />
+            <span>{session.tagName}</span>
+          </span>
+          <span>
+            {isExpired ? "planned " : ""}
+            {formatMinutes(session.durationMinutes)}
+          </span>
         </p>
         <time dateTime={session.endedAt}>{formatDate(session.endedAt)}</time>
         {isExpired && (

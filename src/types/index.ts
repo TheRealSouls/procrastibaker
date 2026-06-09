@@ -1,4 +1,5 @@
 export type View =
+  | "home"
   | "login"
   | "dashboard"
   | "timer"
@@ -6,18 +7,19 @@ export type View =
   | "shop"
   | "stats";
 
-export type StudyTag =
-  | "Study"
-  | "Work"
-  | "Break"
-  | "Revision"
-  | "Reading"
-  | "Project";
+export type StudyTag = {
+  id: string;
+  name: string;
+  color: string;
+  isDefault: boolean;
+};
 
 export type User = {
+  uid?: string;
   username: string;
   email: string;
   coins: number;
+  authProvider: "local" | "google";
 };
 
 export type Pastry = {
@@ -34,7 +36,9 @@ export type StudySession = {
   id: string;
   pastryId: string;
   pastryName: string;
-  tag: StudyTag;
+  tagId: string;
+  tagName: string;
+  tagColor: string;
   durationMinutes: number;
   startedAt: string;
   endedAt: string;
@@ -50,6 +54,7 @@ export type AudioSettings = {
 export type AppState = {
   user: User | null;
   unlockedPastryIds: string[];
+  tags: StudyTag[];
   completedSessions: StudySession[];
   expiredSessions: StudySession[];
   selectedPastryId: string;

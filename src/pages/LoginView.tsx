@@ -1,10 +1,18 @@
 import { FormEvent, useState } from "react";
 
 type LoginViewProps = {
+  authError?: string;
+  isAuthLoading: boolean;
+  onGoogleLogin: () => void;
   onLogin: (username: string, email: string) => void;
 };
 
-export function LoginView({ onLogin }: LoginViewProps) {
+export function LoginView({
+  authError,
+  isAuthLoading,
+  onGoogleLogin,
+  onLogin,
+}: LoginViewProps) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
 
@@ -24,12 +32,34 @@ export function LoginView({ onLogin }: LoginViewProps) {
   return (
     <section className="page-card login-card">
       <div className="page-intro">
-        <span className="intro-icon" aria-hidden="true">🥐</span>
+        <span className="intro-icon" aria-hidden="true">
+          &#129360;
+        </span>
         <h1>Open your study bakery</h1>
         <p>
-          Set up a local prototype profile. Your bakery progress is saved on
-          this device.
+          Continue with Google to open your bakery. Your study progress still
+          stays saved on this device for now.
         </p>
+      </div>
+
+      <button
+        className="button primary google-login-button"
+        disabled={isAuthLoading}
+        onClick={onGoogleLogin}
+        type="button"
+      >
+        <i className="fa-brands fa-google" aria-hidden="true" />
+        Continue with Google
+      </button>
+
+      {authError && (
+        <p className="auth-error" role="alert">
+          {authError}
+        </p>
+      )}
+
+      <div className="login-divider">
+        <span>or use a local prototype profile</span>
       </div>
 
       <form className="form-grid" onSubmit={handleSubmit}>
@@ -38,8 +68,8 @@ export function LoginView({ onLogin }: LoginViewProps) {
           autoComplete="username"
           id="username"
           maxLength={32}
-          pattern=".*\S.*"
           onChange={(event) => setUsername(event.target.value)}
+          pattern=".*\S.*"
           required
           title="Enter at least one non-space character."
           value={username}
@@ -57,7 +87,7 @@ export function LoginView({ onLogin }: LoginViewProps) {
         />
 
         <button className="button primary" type="submit">
-          Continue to dashboard
+          Continue locally
         </button>
       </form>
     </section>

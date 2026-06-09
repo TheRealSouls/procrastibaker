@@ -2,9 +2,13 @@ node_modules/
 dist/
 dist-ssr/
 *.tsbuildinfo
+.firebase/
 
 .env
 .env.local
+.env.development
+.env.production
+.env.test
 .env.*.local
 
 firebase-debug.log*

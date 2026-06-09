@@ -1,7 +1,12 @@
 import { PastryVisual } from "./PastryVisual";
 import { ProgressBar } from "./ProgressBar";
 
-export type OvenStatus = "idle" | "active" | "complete" | "expired";
+export type OvenStatus =
+  | "idle"
+  | "active"
+  | "paused"
+  | "completed"
+  | "expired";
 
 type OvenProps = {
   pastryEmoji: string;
@@ -21,6 +26,7 @@ export function Oven({
   timeLabel,
 }: OvenProps) {
   const clampedProgress = Math.min(100, Math.max(0, progressPercent));
+  const hasRunningTime = status === "active" || status === "paused";
 
   return (
     <section
@@ -29,15 +35,23 @@ export function Oven({
     >
       <div className="oven__body">
         <div className="oven__interior">
-          <span className="oven__glow" />
+          <span className="oven__backlight" aria-hidden="true" />
+          <span className="oven__glow" aria-hidden="true" />
+          <span className="oven__rack" aria-hidden="true" />
           {status === "active" && (
             <>
-              <span className="oven__heat-wave" />
-              <span className="oven__heat-wave oven__heat-wave--two" />
-              <span className="oven__heat-wave oven__heat-wave--three" />
+              <span className="oven__heat-wave" aria-hidden="true" />
+              <span
+                className="oven__heat-wave oven__heat-wave--two"
+                aria-hidden="true"
+              />
+              <span
+                className="oven__heat-wave oven__heat-wave--three"
+                aria-hidden="true"
+              />
             </>
           )}
-          {status === "complete" && (
+          {status === "completed" && (
             <span className="oven__sparkles" aria-hidden="true">
               <span />
               <span />
@@ -64,21 +78,24 @@ export function Oven({
               pastryName={pastryName}
             />
           )}
+          <span className="oven__glass" aria-hidden="true" />
         </div>
       </div>
 
       <div className="oven__status">
         <strong>
-          {status === "complete"
+          {status === "completed"
             ? "Freshly baked!"
             : status === "expired"
               ? "Expired pastry"
+              : status === "paused"
+                ? "Paused"
               : pastryName}
         </strong>
         {timeLabel && (
           <span
             aria-label={
-              status === "active" ? `Time remaining ${timeLabel}` : undefined
+              hasRunningTime ? `Time remaining ${timeLabel}` : undefined
             }
             role={status === "active" ? "timer" : undefined}
           >

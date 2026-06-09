@@ -6,11 +6,17 @@ import { PastrySelector } from "../components/PastrySelector";
 import { PastryVisual } from "../components/PastryVisual";
 import { TagSelector } from "../components/TagSelector";
 import { pastries } from "../data/pastries";
-import { studyTags } from "../data/tags";
+import { DEFAULT_TAGS, findTagById } from "../data/tags";
 import type { AppState, AudioSettings, StudyTag, View } from "../types";
 import { calculateCoins } from "../utils/sessionUtils";
 
-type TimerPhase = "setup" | "active" | "ready" | "success" | "expired";
+type TimerPhase =
+  | "setup"
+  | "active"
+  | "paused"
+  | "ready"
+  | "success"
+  | "expired";
 
 type TimerViewProps = {
   state: AppState;
@@ -28,7 +34,12 @@ type TimerViewProps = {
   ) => void;
   onAudioSettingsChange: (audioSettings: AudioSettings) => void;
   onNavigate: (view: View) => void;
+  onProtectedSessionChange: (
+    isProtected: boolean,
+    expireSession?: () => void,
+  ) => void;
   onSelectPastry: (pastryId: string) => void;
+  onTagsChange: (tags: StudyTag[]) => void;
 };
 
 export function TimerView({
@@ -37,10 +48,12 @@ export function TimerView({
   onCompleteSession,
   onAudioSettingsChange,
   onNavigate,
+  onProtectedSessionChange,
   onSelectPastry,
+  onTagsChange,
 }: TimerViewProps) {
   const [duration, setDuration] = useState(25);
-  const [tag, setTag] = useState<StudyTag>("Study");
+  const [selectedTagId, setSelectedTagId] = useState(DEFAULT_TAGS[0].id);
   const [phase, setPhase] = useState<TimerPhase>("setup");
   const [startedAt, setStartedAt] = useState("");
   const [sessionPastryId, setSessionPastryId] = useState("");
@@ -60,11 +73,17 @@ export function TimerView({
   const onCancelSessionRef = useRef(onCancelSession);
   const onCompleteSessionRef = useRef(onCompleteSession);
   const onNavigateRef = useRef(onNavigate);
+  const expireSessionRef = useRef(expireSession);
+  const remainingSecondsRef = useRef(duration * 60);
   const selectedPastry =
     pastries.find((pastry) => pastry.id === state.selectedPastryId) ??
     pastries[0];
   const bakingPastry =
     pastries.find((pastry) => pastry.id === sessionPastryId) ?? selectedPastry;
+  const fallbackTag =
+    state.tags.find((tag) => tag.isDefault) ?? DEFAULT_TAGS[0];
+  const selectedTag =
+    findTagById(state.tags, selectedTagId) ?? fallbackTag;
   const progress = Math.round(
     ((duration * 60 - remainingSeconds) / (duration * 60)) * 100,
   );
@@ -80,6 +99,31 @@ export function TimerView({
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
+
+  useEffect(() => {
+    remainingSecondsRef.current = remainingSeconds;
+  }, [remainingSeconds]);
+
+  useEffect(() => {
+    expireSessionRef.current = expireSession;
+  });
+
+  useEffect(() => {
+    if (phase !== "active" && phase !== "paused") {
+      onProtectedSessionChange(false);
+      return;
+    }
+
+    onProtectedSessionChange(true, () => expireSessionRef.current());
+
+    return () => onProtectedSessionChange(false);
+  }, [onProtectedSessionChange, phase]);
+
+  useEffect(() => {
+    if (!findTagById(state.tags, selectedTagId)) {
+      setSelectedTagId(fallbackTag.id);
+    }
+  }, [fallbackTag.id, selectedTagId, state.tags]);
 
   useEffect(() => {
     const audio = new Audio("/sounds/oven-loop.mp3");
@@ -123,6 +167,7 @@ export function TimerView({
         Math.ceil((targetEndMs - Date.now()) / 1000),
       );
 
+      remainingSecondsRef.current = nextRemainingSeconds;
       setRemainingSeconds(nextRemainingSeconds);
 
       if (nextRemainingSeconds === 0) {
@@ -136,20 +181,20 @@ export function TimerView({
   }, [phase, targetEndMs]);
 
   useEffect(() => {
-    if (phase !== "active") {
+    if (phase !== "active" && phase !== "paused") {
       setShowCancelConfirm(false);
     }
   }, [phase]);
 
   useEffect(() => {
-    if (phase !== "active") {
+    if (phase !== "active" && phase !== "paused") {
       return;
     }
 
     function warnBeforeUnload(event: BeforeUnloadEvent) {
       event.preventDefault();
       event.returnValue =
-        "Your pastry may expire if you leave during an active session.";
+        "Your pastry may expire if you leave during an unfinished session.";
     }
 
     window.addEventListener("beforeunload", warnBeforeUnload);
@@ -203,7 +248,7 @@ export function TimerView({
         return;
       }
 
-      if (phaseRef.current === "active") {
+      if (phaseRef.current === "active" || phaseRef.current === "paused") {
         onCancelSessionRef.current(
           activeSession.tag,
           activeSession.duration,
@@ -228,12 +273,13 @@ export function TimerView({
       duration,
       pastryId: selectedPastry.id,
       startedAt: nextStartedAt,
-      tag,
+      tag: selectedTag,
     };
     setStartedAt(nextStartedAt);
     setSessionPastryId(selectedPastry.id);
     setTargetEndMs(nextTargetEndMs);
     setRemainingSeconds(duration * 60);
+    remainingSecondsRef.current = duration * 60;
     phaseRef.current = "active";
     playOvenSound();
     setPhase("active");
@@ -260,6 +306,16 @@ export function TimerView({
     }
   }
 
+  function changeTags(nextTags: StudyTag[]) {
+    onTagsChange(nextTags);
+
+    if (!findTagById(nextTags, selectedTagId)) {
+      setSelectedTagId(
+        nextTags.find((tag) => tag.isDefault)?.id ?? DEFAULT_TAGS[0].id,
+      );
+    }
+  }
+
   function finishSession() {
     if (phase !== "ready") {
       return;
@@ -268,8 +324,48 @@ export function TimerView({
     completeSession();
   }
 
+  function pauseSession() {
+    if (phaseRef.current !== "active") {
+      return;
+    }
+
+    const nextRemainingSeconds = Math.max(
+      0,
+      Math.ceil((targetEndMs - Date.now()) / 1000),
+    );
+
+    remainingSecondsRef.current = nextRemainingSeconds;
+    setRemainingSeconds(nextRemainingSeconds);
+    stopOvenSound();
+
+    if (nextRemainingSeconds === 0) {
+      phaseRef.current = "ready";
+      setPhase("ready");
+      return;
+    }
+
+    phaseRef.current = "paused";
+    setPhase("paused");
+  }
+
+  function resumeSession() {
+    if (phaseRef.current !== "paused") {
+      return;
+    }
+
+    if (remainingSecondsRef.current <= 0) {
+      phaseRef.current = "ready";
+      setPhase("ready");
+      return;
+    }
+
+    setTargetEndMs(Date.now() + remainingSecondsRef.current * 1000);
+    phaseRef.current = "active";
+    setPhase("active");
+  }
+
   function requestCancelSession() {
-    if (phase !== "active") {
+    if (phase !== "active" && phase !== "paused") {
       return;
     }
 
@@ -287,7 +383,7 @@ export function TimerView({
   }
 
   function expireSession() {
-    if (phase !== "active") {
+    if (phaseRef.current !== "active" && phaseRef.current !== "paused") {
       return;
     }
 
@@ -297,7 +393,7 @@ export function TimerView({
     activeSessionRef.current = null;
     stopOvenSound();
     onCancelSessionRef.current(
-      activeSession?.tag ?? tag,
+      activeSession?.tag ?? selectedTag,
       activeSession?.duration ?? duration,
       (activeSession?.startedAt ?? startedAt) || new Date().toISOString(),
       activeSession?.pastryId ?? selectedPastry.id,
@@ -355,7 +451,13 @@ export function TimerView({
 
   if (phase !== "setup") {
     const ovenStatus: OvenStatus =
-      phase === "active" ? "active" : phase === "expired" ? "expired" : "complete";
+      phase === "active"
+        ? "active"
+        : phase === "paused"
+          ? "paused"
+        : phase === "expired"
+          ? "expired"
+          : "completed";
 
     return (
       <div className="timer-layout active-timer-layout">
@@ -373,12 +475,14 @@ export function TimerView({
                   ? "Fresh from the oven"
                   : phase === "expired"
                     ? "Session stopped"
-                    : "Baking now"}
+                    : phase === "paused"
+                      ? "Baking paused"
+                      : "Baking now"}
               </h1>
             </div>
             <div className="session-heading__details">
               <p>
-                {bakingPastry.name} - {duration} min - {tag}
+                {bakingPastry.name} - {duration} min - {selectedTag.name}
               </p>
               <p className="reward-note">
                 {phase === "expired"
@@ -421,6 +525,11 @@ export function TimerView({
               Session saved. Returning to your dashboard.
             </p>
           )}
+          {phase === "paused" && (
+            <p className="setup-paused">
+              Timer paused. Resume when you are ready to keep baking.
+            </p>
+          )}
           {phase === "expired" && (
             <p className="setup-expired">
               This pastry expired because the session was stopped early.
@@ -444,8 +553,23 @@ export function TimerView({
               Finish Session
             </button>
             <button
+              aria-label={phase === "paused" ? "Resume session" : "Pause session"}
+              className="button pause-button"
+              disabled={phase !== "active" && phase !== "paused"}
+              onClick={phase === "paused" ? resumeSession : pauseSession}
+              type="button"
+            >
+              <i
+                aria-hidden="true"
+                className={
+                  phase === "paused" ? "fa-solid fa-play" : "fa-solid fa-pause"
+                }
+              />
+              <span>{phase === "paused" ? "Resume" : "Pause"}</span>
+            </button>
+            <button
               className="button danger"
-              disabled={phase !== "active"}
+              disabled={phase !== "active" && phase !== "paused"}
               onClick={requestCancelSession}
               ref={cancelSessionButtonRef}
               type="button"
@@ -483,7 +607,12 @@ export function TimerView({
 
         <DurationSelector duration={duration} onChange={changeDuration} />
 
-        <TagSelector onChange={setTag} selectedTag={tag} tags={studyTags} />
+        <TagSelector
+          onChange={setSelectedTagId}
+          onTagsChange={changeTags}
+          selectedTagId={selectedTag.id}
+          tags={state.tags}
+        />
 
         <PastrySelector
           onSelect={onSelectPastry}
@@ -508,7 +637,7 @@ export function TimerView({
           <div>
             <h2>{selectedPastry.name}</h2>
             <p>
-              Selected for {duration} minutes of {tag.toLowerCase()}. Complete
+              Selected for {duration} minutes of {selectedTag.name.toLowerCase()}. Complete
               it to earn {formatCoinReward(coinReward)}.
             </p>
           </div>

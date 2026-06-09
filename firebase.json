@@ -1,0 +1,8 @@
+{
+  "hosting": {
+    "site": "procrastibaker-d3c13-40511",
+    "public": "dist",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [{ "source": "**", "destination": "/index.html" }]
+  }
+}

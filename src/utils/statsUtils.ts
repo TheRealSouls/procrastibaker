@@ -1,5 +1,5 @@
 import { pastries } from "../data/pastries";
-import { studyTags } from "../data/tags";
+import { DEFAULT_TAGS, fallbackTagColor, findTagById } from "../data/tags";
 import type { StudySession, StudyTag } from "../types";
 
 export type PastryCount = {
@@ -10,27 +10,43 @@ export type PastryCount = {
   totalMinutes: number;
 };
 
+export type TagMinuteTotal = {
+  tagId: string;
+  tagName: string;
+  tagColor: string;
+  minutes: number;
+};
+
 export function getTotalMinutesByTag(
   sessions: StudySession[],
-): Record<StudyTag, number> {
-  return studyTags.reduce<Record<StudyTag, number>>(
-    (totals, tag) => ({
-      ...totals,
-      [tag]: sessions.reduce(
-        (total, session) =>
-          session.tag === tag ? total + session.durationMinutes : total,
-        0,
-      ),
-    }),
-    {
-      Study: 0,
-      Work: 0,
-      Break: 0,
-      Revision: 0,
-      Reading: 0,
-      Project: 0,
-    },
-  );
+  tags: StudyTag[] = DEFAULT_TAGS,
+): TagMinuteTotal[] {
+  const totals = new Map<string, TagMinuteTotal>();
+
+  for (const tag of tags) {
+    totals.set(tag.id, {
+      tagId: tag.id,
+      tagName: tag.name,
+      tagColor: tag.color,
+      minutes: 0,
+    });
+  }
+
+  for (const session of sessions) {
+    const tag = findTagById(tags, session.tagId);
+    const tagId = session.tagId || tag?.id || session.tagName;
+    const total = totals.get(tagId) ?? {
+      tagId,
+      tagName: session.tagName || tag?.name || "Unknown",
+      tagColor: session.tagColor || tag?.color || fallbackTagColor,
+      minutes: 0,
+    };
+
+    total.minutes += session.durationMinutes;
+    totals.set(tagId, total);
+  }
+
+  return [...totals.values()];
 }
 
 export function getPastryCounts(sessions: StudySession[]): PastryCount[] {
@@ -66,17 +82,23 @@ export function getCompletionRate(
     : Math.round((completedSessions.length / totalSessions) * 100);
 }
 
-export function getMostUsedTag(sessions: StudySession[]): StudyTag | null {
-  const totals = studyTags.map((tag) => ({
-    tag,
-    count: sessions.filter((session) => session.tag === tag).length,
-  }));
-  const mostUsed = totals.reduce(
+export function getMostUsedTag(sessions: StudySession[]): string | null {
+  const totals = new Map<string, { count: number; name: string }>();
+
+  for (const session of sessions) {
+    const key = session.tagId || session.tagName;
+    const total = totals.get(key) ?? { count: 0, name: session.tagName };
+
+    total.count += 1;
+    totals.set(key, total);
+  }
+
+  const mostUsed = [...totals.values()].reduce(
     (best, entry) => (entry.count > best.count ? entry : best),
-    { count: 0, tag: null as StudyTag | null },
+    { count: 0, name: null as string | null },
   );
 
-  return mostUsed.count > 0 ? mostUsed.tag : null;
+  return mostUsed.count > 0 ? mostUsed.name : null;
 }
 
 export function getMostBakedPastry(sessions: StudySession[]): string | null {

@@ -1,4 +1,10 @@
-import { studyTags } from "../data/tags";
+import {
+  DEFAULT_TAGS,
+  fallbackTagColor,
+  findTagById,
+  findTagByName,
+  maxCustomTags,
+} from "../data/tags";
 import { pastries } from "../data/pastries";
 import type {
   AppState,
@@ -21,6 +27,7 @@ export function createDefaultAppState(): AppState {
     unlockedPastryIds: pastries
       .filter((pastry) => pastry.unlockedByDefault)
       .map((pastry) => pastry.id),
+    tags: DEFAULT_TAGS,
     completedSessions: [],
     expiredSessions: [],
     selectedPastryId,
@@ -79,16 +86,18 @@ function normalizeAppState(value: unknown, fallback: AppState): AppState {
     unlockedPastryIds.includes(value.selectedPastryId)
       ? value.selectedPastryId
       : fallback.selectedPastryId;
+  const tags = normalizeTags(value.tags);
 
   return {
     user: isUser(value.user) ? normalizeUser(value.user) : fallback.user,
     unlockedPastryIds,
     completedSessions: Array.isArray(value.completedSessions)
-      ? value.completedSessions.filter(isStudySession)
+      ? normalizeStudySessions(value.completedSessions, tags)
       : fallback.completedSessions,
     expiredSessions: Array.isArray(value.expiredSessions)
-      ? value.expiredSessions.filter(isStudySession)
+      ? normalizeStudySessions(value.expiredSessions, tags)
       : fallback.expiredSessions,
+    tags,
     selectedPastryId,
     audioSettings: normalizeAudioSettings(
       value.audioSettings,
@@ -101,7 +110,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function isUser(value: unknown): value is User {
+function isUser(value: unknown): value is Record<string, unknown> {
   return (
     isRecord(value) &&
     typeof value.username === "string" &&
@@ -113,11 +122,16 @@ function isUser(value: unknown): value is User {
   );
 }
 
-function normalizeUser(user: User): User {
+function normalizeUser(user: Record<string, unknown>): User {
+  const uid = typeof user.uid === "string" ? user.uid.trim().slice(0, 128) : "";
+  const authProvider = user.authProvider === "google" ? "google" : "local";
+
   return {
-    username: user.username.trim().slice(0, 32),
-    email: user.email.trim().slice(0, 80),
-    coins: Math.max(0, Math.floor(user.coins)),
+    ...(uid ? { uid } : {}),
+    username: String(user.username).trim().slice(0, 32),
+    email: String(user.email).trim().slice(0, 80),
+    coins: Math.max(0, Math.floor(Number(user.coins))),
+    authProvider,
   };
 }
 
@@ -144,20 +158,110 @@ function clampSoundVolume(value: number) {
   return Math.min(100, Math.max(0, Math.round(value)));
 }
 
-function isStudySession(value: unknown): value is StudySession {
-  return (
-    isRecord(value) &&
-    typeof value.id === "string" &&
-    isPastryId(value.pastryId) &&
-    typeof value.pastryName === "string" &&
-    isStudyTag(value.tag) &&
-    typeof value.durationMinutes === "number" &&
-    Number.isFinite(value.durationMinutes) &&
-    typeof value.startedAt === "string" &&
-    typeof value.endedAt === "string" &&
-    typeof value.completed === "boolean" &&
-    typeof value.expired === "boolean"
-  );
+function normalizeTags(value: unknown): StudyTag[] {
+  if (!Array.isArray(value)) {
+    return DEFAULT_TAGS;
+  }
+
+  const customTags: StudyTag[] = [];
+  const usedNames = new Set(DEFAULT_TAGS.map((tag) => tag.name.toLowerCase()));
+  const usedIds = new Set(DEFAULT_TAGS.map((tag) => tag.id));
+
+  for (const item of value) {
+    if (!isRecord(item) || item.isDefault === true) {
+      continue;
+    }
+
+    const name =
+      typeof item.name === "string" ? item.name.trim().slice(0, 24) : "";
+    const id =
+      typeof item.id === "string" ? item.id.trim().slice(0, 80) : "";
+    const color = typeof item.color === "string" ? item.color.trim() : "";
+    const normalizedName = name.toLowerCase();
+
+    if (
+      !name ||
+      !id ||
+      usedNames.has(normalizedName) ||
+      usedIds.has(id) ||
+      !isHexColor(color) ||
+      customTags.length >= maxCustomTags
+    ) {
+      continue;
+    }
+
+    usedNames.add(normalizedName);
+    usedIds.add(id);
+    customTags.push({
+      id,
+      name,
+      color,
+      isDefault: false,
+    });
+  }
+
+  return [...DEFAULT_TAGS, ...customTags];
+}
+
+function normalizeStudySessions(
+  values: unknown[],
+  tags: StudyTag[],
+): StudySession[] {
+  return values
+    .map((value) => normalizeStudySession(value, tags))
+    .filter((session): session is StudySession => session !== null);
+}
+
+function normalizeStudySession(
+  value: unknown,
+  tags: StudyTag[],
+): StudySession | null {
+  if (
+    !isRecord(value) ||
+    typeof value.id !== "string" ||
+    !isPastryId(value.pastryId) ||
+    typeof value.pastryName !== "string" ||
+    typeof value.durationMinutes !== "number" ||
+    !Number.isFinite(value.durationMinutes) ||
+    typeof value.startedAt !== "string" ||
+    typeof value.endedAt !== "string" ||
+    typeof value.completed !== "boolean" ||
+    typeof value.expired !== "boolean"
+  ) {
+    return null;
+  }
+
+  const legacyTag = typeof value.tag === "string" ? value.tag : "";
+  const storedTagName =
+    typeof value.tagName === "string" ? value.tagName : legacyTag;
+  const storedTagId = typeof value.tagId === "string" ? value.tagId : "";
+  const matchedTag =
+    (storedTagId ? findTagById(tags, storedTagId) : null) ??
+    findTagByName(tags, storedTagName) ??
+    findTagByName(DEFAULT_TAGS, storedTagName);
+  const tagName =
+    storedTagName.trim().slice(0, 24) ||
+    matchedTag?.name ||
+    DEFAULT_TAGS[0].name;
+  const tagColor =
+    typeof value.tagColor === "string" && isHexColor(value.tagColor)
+      ? value.tagColor
+      : matchedTag?.color || fallbackTagColor;
+
+  return {
+    id: value.id,
+    pastryId: value.pastryId,
+    pastryName: value.pastryName,
+    tagId:
+      storedTagId.trim().slice(0, 80) || matchedTag?.id || DEFAULT_TAGS[0].id,
+    tagName,
+    tagColor,
+    durationMinutes: value.durationMinutes,
+    startedAt: value.startedAt,
+    endedAt: value.endedAt,
+    completed: value.completed,
+    expired: value.expired,
+  };
 }
 
 function isPastryId(value: unknown): value is string {
@@ -166,9 +270,6 @@ function isPastryId(value: unknown): value is string {
   );
 }
 
-function isStudyTag(value: unknown): value is StudyTag {
-  return (
-    typeof value === "string" &&
-    studyTags.includes(value as StudyTag)
-  );
+function isHexColor(value: string) {
+  return /^#[0-9A-Fa-f]{6}$/.test(value);
 }

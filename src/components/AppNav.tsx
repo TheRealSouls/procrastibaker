@@ -1,11 +1,16 @@
 import type { View } from "../types";
+import barChartIcon from "../media/sprites/bar_chart.png";
+import clockIcon from "../media/sprites/clock.png";
+import houseIcon from "../media/sprites/house.png";
+import muffinIcon from "../media/sprites/muffin.png";
+import shoppingCartIcon from "../media/sprites/shopping_cart.png";
 
 const navItems: { icon: string; id: View; label: string }[] = [
-  { icon: "🏠", id: "dashboard", label: "Dashboard" },
-  { icon: "⏲️", id: "timer", label: "Timer" },
-  { icon: "🧁", id: "bakery", label: "Bakery" },
-  { icon: "🛒", id: "shop", label: "Shop" },
-  { icon: "📊", id: "stats", label: "Stats" },
+  { icon: houseIcon, id: "dashboard", label: "Dashboard" },
+  { icon: clockIcon, id: "timer", label: "Timer" },
+  { icon: muffinIcon, id: "bakery", label: "Bakery" },
+  { icon: shoppingCartIcon, id: "shop", label: "Shop" },
+  { icon: barChartIcon, id: "stats", label: "Stats" },
 ];
 
 type AppNavProps = {
@@ -24,7 +29,16 @@ export function AppNav({ currentView, onChange }: AppNavProps) {
           onClick={() => onChange(item.id)}
           type="button"
         >
-          <span aria-hidden="true">{item.icon}</span>
+          <img
+            alt=""
+            aria-hidden="true"
+            className="sidebar-icon"
+            draggable={false}
+            onError={(event) => {
+              event.currentTarget.classList.add("sidebar-icon--missing");
+            }}
+            src={item.icon}
+          />
           {item.label}
         </button>
       ))}

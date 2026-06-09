@@ -1,14 +1,12 @@
+import type { CSSProperties } from "react";
 import { EmptyState } from "../components/EmptyState";
 import { PastryVisual } from "../components/PastryVisual";
 import { ProgressBar } from "../components/ProgressBar";
 import { StatCard } from "../components/StatCard";
-import { studyTags } from "../data/tags";
 import type { AppState } from "../types";
 import { formatMinutes } from "../utils/sessionUtils";
 import {
   getCompletionRate,
-  getMostBakedPastry,
-  getMostUsedTag,
   getPastryCounts,
   getTotalMinutesByTag,
 } from "../utils/statsUtils";
@@ -18,16 +16,15 @@ type StatsViewProps = {
 };
 
 export function StatsView({ state }: StatsViewProps) {
-  const tagMinutesByTag = getTotalMinutesByTag(state.completedSessions);
-  const tagMinutes = studyTags.map((tag) => ({
-    label: tag,
-    value: tagMinutesByTag[tag],
-  }));
-  const totalCompletedMinutes = Object.values(tagMinutesByTag).reduce(
-    (total, minutes) => total + minutes,
+  const tagMinutes = getTotalMinutesByTag(
+    state.completedSessions,
+    state.tags,
+  );
+  const totalCompletedMinutes = tagMinutes.reduce(
+    (total, entry) => total + entry.minutes,
     0,
   );
-  const maxTagMinutes = Math.max(...tagMinutes.map((entry) => entry.value), 0);
+  const maxTagMinutes = Math.max(...tagMinutes.map((entry) => entry.minutes), 0);
   const pastryCounts = getPastryCounts(state.completedSessions);
   const totalSessions =
     state.completedSessions.length + state.expiredSessions.length;
@@ -35,6 +32,11 @@ export function StatsView({ state }: StatsViewProps) {
     state.completedSessions,
     state.expiredSessions,
   );
+  const mostBakedPastry = pastryCounts.reduce(
+    (best, entry) => (entry.count > best.count ? entry : best),
+    { count: 0, emoji: "", id: "", name: "", totalMinutes: 0 },
+  );
+  const mostUsedTag = getMostUsedTagSummary(state.completedSessions);
 
   return (
     <div className="page-stack">
@@ -57,19 +59,19 @@ export function StatsView({ state }: StatsViewProps) {
           label="Completed study minutes"
           value={totalCompletedMinutes}
         />
-        <StatCard label="Work minutes" value={tagMinutesByTag.Work} />
-        <StatCard label="Break minutes" value={tagMinutesByTag.Break} />
+        <StatCard label="Work minutes" value={getTagMinutes(tagMinutes, "work")} />
+        <StatCard label="Break minutes" value={getTagMinutes(tagMinutes, "break")} />
         <StatCard
           label="Revision minutes"
-          value={tagMinutesByTag.Revision}
+          value={getTagMinutes(tagMinutes, "revision")}
         />
         <StatCard
           label="Reading minutes"
-          value={tagMinutesByTag.Reading}
+          value={getTagMinutes(tagMinutes, "reading")}
         />
         <StatCard
           label="Project minutes"
-          value={tagMinutesByTag.Project}
+          value={getTagMinutes(tagMinutes, "project")}
         />
         <StatCard
           label="Total completed sessions"
@@ -82,12 +84,31 @@ export function StatsView({ state }: StatsViewProps) {
         <StatCard label="Completion rate" value={`${completionRate}%`} />
         <StatCard label="Current coin balance" value={state.user?.coins ?? 0} />
         <StatCard
+          accessory={
+            mostBakedPastry.count > 0 ? (
+              <PastryVisual
+                className="stat-card__pastry"
+                emoji={mostBakedPastry.emoji}
+                pastryId={mostBakedPastry.id}
+                pastryName={mostBakedPastry.name}
+              />
+            ) : undefined
+          }
           label="Most baked pastry"
-          value={getMostBakedPastry(state.completedSessions) ?? "None yet"}
+          value={mostBakedPastry.count > 0 ? mostBakedPastry.name : "None yet"}
         />
         <StatCard
+          accessory={
+            mostUsedTag ? (
+              <span
+                aria-hidden="true"
+                className="tag-dot stat-card__tag-dot"
+                style={{ "--tag-color": mostUsedTag.color } as CSSProperties}
+              />
+            ) : undefined
+          }
           label="Most used tag"
-          value={getMostUsedTag(state.completedSessions) ?? "None yet"}
+          value={mostUsedTag?.name ?? "None yet"}
         />
       </section>
 
@@ -98,15 +119,23 @@ export function StatsView({ state }: StatsViewProps) {
         </div>
         <div className="bar-list">
           {tagMinutes.map((entry) => (
-            <div className="bar-row" key={entry.label}>
-              <span>{entry.label}</span>
+            <div
+              className="bar-row"
+              key={entry.tagId}
+              style={{ "--tag-color": entry.tagColor } as CSSProperties}
+            >
+              <span className="tag-label">
+                <span className="tag-dot" aria-hidden="true" />
+                <span>{entry.tagName}</span>
+              </span>
               <ProgressBar
-                ariaLabel={`${entry.label} minutes`}
+                ariaLabel={`${entry.tagName} minutes`}
+                fillClassName="bar-fill tag-bar-fill"
                 max={maxTagMinutes}
-                value={entry.value}
-                valueText={formatMinutes(entry.value)}
+                value={entry.minutes}
+                valueText={formatMinutes(entry.minutes)}
               />
-              <strong>{formatMinutes(entry.value)}</strong>
+              <strong>{formatMinutes(entry.minutes)}</strong>
             </div>
           ))}
         </div>
@@ -136,4 +165,34 @@ export function StatsView({ state }: StatsViewProps) {
       </section>
     </div>
   );
+}
+
+function getTagMinutes(
+  tagMinutes: ReturnType<typeof getTotalMinutesByTag>,
+  tagId: string,
+) {
+  return tagMinutes.find((entry) => entry.tagId === tagId)?.minutes ?? 0;
+}
+
+function getMostUsedTagSummary(sessions: AppState["completedSessions"]) {
+  const totals = new Map<string, { color: string; count: number; name: string }>();
+
+  for (const session of sessions) {
+    const key = session.tagId || session.tagName;
+    const total = totals.get(key) ?? {
+      color: session.tagColor,
+      count: 0,
+      name: session.tagName,
+    };
+
+    total.count += 1;
+    totals.set(key, total);
+  }
+
+  const mostUsed = [...totals.values()].reduce(
+    (best, entry) => (entry.count > best.count ? entry : best),
+    { color: "", count: 0, name: "" },
+  );
+
+  return mostUsed.count > 0 ? mostUsed : null;
 }
