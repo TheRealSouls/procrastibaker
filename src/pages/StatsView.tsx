@@ -1,14 +1,22 @@
 import type { CSSProperties } from "react";
+import { useTranslation } from "react-i18next";
 import { EmptyState } from "../components/EmptyState";
+import { FocusHeatmap } from "../components/FocusHeatmap";
+import { FocusMomentum } from "../components/FocusMomentum";
 import { PastryVisual } from "../components/PastryVisual";
-import { ProgressBar } from "../components/ProgressBar";
 import { StatCard } from "../components/StatCard";
+import { TagDonutChart } from "../components/TagDonutChart";
+import { WeeklyTrendChart } from "../components/WeeklyTrendChart";
 import type { AppState } from "../types";
 import { formatMinutes } from "../utils/sessionUtils";
 import {
   getCompletionRate,
+  getFocusRecords,
+  getHeatmapWeeks,
   getPastryCounts,
   getTotalMinutesByTag,
+  getWeeklyFocus,
+  getWeekOverWeekDelta,
 } from "../utils/statsUtils";
 
 type StatsViewProps = {
@@ -16,6 +24,7 @@ type StatsViewProps = {
 };
 
 export function StatsView({ state }: StatsViewProps) {
+  const { t } = useTranslation();
   const tagMinutes = getTotalMinutesByTag(
     state.completedSessions,
     state.tags,
@@ -24,7 +33,6 @@ export function StatsView({ state }: StatsViewProps) {
     (total, entry) => total + entry.minutes,
     0,
   );
-  const maxTagMinutes = Math.max(...tagMinutes.map((entry) => entry.minutes), 0);
   const pastryCounts = getPastryCounts(state.completedSessions);
   const totalSessions =
     state.completedSessions.length + state.expiredSessions.length;
@@ -37,52 +45,84 @@ export function StatsView({ state }: StatsViewProps) {
     { count: 0, emoji: "", id: "", name: "", totalMinutes: 0 },
   );
   const mostUsedTag = getMostUsedTagSummary(state.completedSessions);
+  const hasFocusData = state.completedSessions.length > 0;
+  const heatmap = getHeatmapWeeks(state.completedSessions, 17);
+  const weekly = getWeeklyFocus(
+    state.completedSessions,
+    state.expiredSessions,
+    8,
+  );
+  const weekDelta = getWeekOverWeekDelta(weekly);
+  const focusRecords = getFocusRecords(state.completedSessions);
 
   return (
     <div className="page-stack">
       <section className="page-heading">
-        <h1>Study stats</h1>
-        <p>
-          A clear breakdown of completed focus time, stopped sessions, pastry
-          bakes, and study tag patterns.
-        </p>
+        <h1>{t("stats.title")}</h1>
+        <p>{t("stats.intro")}</p>
       </section>
 
       {totalSessions === 0 && (
-        <EmptyState icon={"\u{1F4DA}"} title="No study data yet.">
-          Complete or cancel a baking session to start filling your stats.
+        <EmptyState icon={"\u{1F4DA}"} title={t("stats.emptyTitle")}>
+          {t("stats.emptyBody")}
         </EmptyState>
       )}
 
-      <section className="card-grid" aria-label="Study statistics summary">
+      {hasFocusData && (
+        <>
+          <FocusMomentum
+            delta={weekDelta}
+            records={focusRecords}
+            streakCount={state.user?.streakCount ?? 0}
+          />
+
+          <section className="page-card">
+            <div className="section-title-row">
+              <h2>{t("stats.focusCalendar")}</h2>
+              <span>{t("stats.lastFourMonths")}</span>
+            </div>
+            <FocusHeatmap data={heatmap} />
+          </section>
+
+          <section className="page-card">
+            <div className="section-title-row">
+              <h2>{t("stats.weeklyTrend")}</h2>
+              <span>{t("stats.lastEightWeeks")}</span>
+            </div>
+            <WeeklyTrendChart data={weekly} />
+          </section>
+        </>
+      )}
+
+      <section className="card-grid" aria-label={t("stats.summaryAria")}>
         <StatCard
-          label="Completed study minutes"
+          label={t("stats.completedMinutes")}
           value={totalCompletedMinutes}
         />
-        <StatCard label="Work minutes" value={getTagMinutes(tagMinutes, "work")} />
-        <StatCard label="Break minutes" value={getTagMinutes(tagMinutes, "break")} />
+        <StatCard label={t("stats.workMinutes")} value={getTagMinutes(tagMinutes, "work")} />
+        <StatCard label={t("stats.breakMinutes")} value={getTagMinutes(tagMinutes, "break")} />
         <StatCard
-          label="Revision minutes"
+          label={t("stats.revisionMinutes")}
           value={getTagMinutes(tagMinutes, "revision")}
         />
         <StatCard
-          label="Reading minutes"
+          label={t("stats.readingMinutes")}
           value={getTagMinutes(tagMinutes, "reading")}
         />
         <StatCard
-          label="Project minutes"
+          label={t("stats.projectMinutes")}
           value={getTagMinutes(tagMinutes, "project")}
         />
         <StatCard
-          label="Total completed sessions"
+          label={t("stats.totalSessions")}
           value={state.completedSessions.length}
         />
         <StatCard
-          label="Total failed sessions"
+          label={t("stats.failedSessions")}
           value={state.expiredSessions.length}
         />
-        <StatCard label="Completion rate" value={`${completionRate}%`} />
-        <StatCard label="Current coin balance" value={state.user?.coins ?? 0} />
+        <StatCard label={t("stats.completionRate")} value={`${completionRate}%`} />
+        <StatCard label={t("stats.coinBalance")} value={state.user?.coins ?? 0} />
         <StatCard
           accessory={
             mostBakedPastry.count > 0 ? (
@@ -94,8 +134,10 @@ export function StatsView({ state }: StatsViewProps) {
               />
             ) : undefined
           }
-          label="Most baked pastry"
-          value={mostBakedPastry.count > 0 ? mostBakedPastry.name : "None yet"}
+          label={t("stats.mostBaked")}
+          value={
+            mostBakedPastry.count > 0 ? mostBakedPastry.name : t("stats.noneYet")
+          }
         />
         <StatCard
           accessory={
@@ -107,44 +149,29 @@ export function StatsView({ state }: StatsViewProps) {
               />
             ) : undefined
           }
-          label="Most used tag"
-          value={mostUsedTag?.name ?? "None yet"}
+          label={t("stats.mostUsedTag")}
+          value={mostUsedTag?.name ?? t("stats.noneYet")}
         />
       </section>
 
-      <section className="page-card">
+      <section className="page-card tag-breakdown-card">
         <div className="section-title-row">
-          <h2>Tag breakdown</h2>
-          <span>{formatMinutes(totalCompletedMinutes)} total</span>
+          <h2>{t("stats.tagBreakdown")}</h2>
+          <span>
+            {t("stats.totalSuffix", {
+              time: formatMinutes(totalCompletedMinutes),
+            })}
+          </span>
         </div>
-        <div className="bar-list">
-          {tagMinutes.map((entry) => (
-            <div
-              className="bar-row"
-              key={entry.tagId}
-              style={{ "--tag-color": entry.tagColor } as CSSProperties}
-            >
-              <span className="tag-label">
-                <span className="tag-dot" aria-hidden="true" />
-                <span>{entry.tagName}</span>
-              </span>
-              <ProgressBar
-                ariaLabel={`${entry.tagName} minutes`}
-                fillClassName="bar-fill tag-bar-fill"
-                max={maxTagMinutes}
-                value={entry.minutes}
-                valueText={formatMinutes(entry.minutes)}
-              />
-              <strong>{formatMinutes(entry.minutes)}</strong>
-            </div>
-          ))}
-        </div>
+        <TagDonutChart data={tagMinutes} totalMinutes={totalCompletedMinutes} />
       </section>
 
       <section className="page-card">
         <div className="section-title-row">
-          <h2>Pastry breakdown</h2>
-          <span>{state.completedSessions.length} baked</span>
+          <h2>{t("stats.pastryBreakdown")}</h2>
+          <span>
+            {t("stats.bakedCount", { count: state.completedSessions.length })}
+          </span>
         </div>
         <div className="pastry-breakdown-grid">
           {pastryCounts.map((entry) => (

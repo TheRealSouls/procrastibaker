@@ -1,11 +1,17 @@
 import {
-  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  deleteUser,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signOut as firebaseSignOut,
   type User as FirebaseUser,
 } from "firebase/auth";
 import type { User } from "../types";
-import { loadAppState, saveAppState } from "./appStorage";
+import { loadAppState } from "./appStorage";
 import {
   getFirebaseAuth,
   getOptionalFirebaseAuth,
@@ -15,30 +21,45 @@ import {
 type UserInput = Pick<User, "username" | "email" | "coins"> &
   Partial<Pick<User, "uid" | "authProvider">>;
 
-export function getCurrentUser(): User | null {
-  const firebaseUser = getCurrentFirebaseUser();
-
-  if (firebaseUser) {
-    return mapFirebaseUserToAppUser(firebaseUser);
-  }
-
-  return loadAppState().user;
-}
-
 export function getCurrentFirebaseUser() {
   return getOptionalFirebaseAuth()?.currentUser ?? null;
 }
 
+/** Signs in with Google (popup). Procrastibaker requires a real account. */
 export async function loginWithGoogle(): Promise<User> {
   const result = await signInWithPopup(getFirebaseAuth(), googleProvider);
-  const user = mapFirebaseUserToAppUser(result.user, loadAppState().user);
+  return mapFirebaseUserToAppUser(result.user);
+}
 
-  saveAppState({
-    ...loadAppState(),
-    user,
-  });
+/** Creates a new email/password account. */
+export async function signUpWithEmail(
+  email: string,
+  password: string,
+): Promise<User> {
+  const result = await createUserWithEmailAndPassword(
+    getFirebaseAuth(),
+    email,
+    password,
+  );
+  return mapFirebaseUserToAppUser(result.user);
+}
 
-  return user;
+/** Signs in to an existing email/password account. */
+export async function signInWithEmail(
+  email: string,
+  password: string,
+): Promise<User> {
+  const result = await signInWithEmailAndPassword(
+    getFirebaseAuth(),
+    email,
+    password,
+  );
+  return mapFirebaseUserToAppUser(result.user);
+}
+
+/** Sends a password-reset email (handled entirely by Firebase, no backend). */
+export async function sendPasswordReset(email: string): Promise<void> {
+  await sendPasswordResetEmail(getFirebaseAuth(), email);
 }
 
 export async function logout() {
@@ -47,108 +68,94 @@ export async function logout() {
   if (auth?.currentUser) {
     await firebaseSignOut(auth);
   }
-
-  saveAppState({
-    ...loadAppState(),
-    user: null,
-  });
 }
 
-export function listenToAuthChanges(onUser: (user: User | null) => void) {
-  const auth = getOptionalFirebaseAuth();
+/**
+ * Re-verifies the user's identity before a sensitive action (account deletion).
+ * Google users get a popup; email users must supply their current password.
+ * Returns "password-required" when a password is needed but was not provided.
+ */
+export async function reauthenticateCurrentUser(
+  password?: string,
+): Promise<"ok" | "password-required"> {
+  const auth = getFirebaseAuth();
+  const user = auth.currentUser;
 
-  if (!auth) {
-    return () => undefined;
+  if (!user) {
+    throw new Error("You are not signed in.");
   }
 
-  let hasSeenFirebaseUser = false;
+  const providerId = user.providerData[0]?.providerId;
 
-  return onAuthStateChanged(auth, (firebaseUser) => {
-    if (!firebaseUser) {
-      if (hasSeenFirebaseUser) {
-        saveAppState({
-          ...loadAppState(),
-          user: null,
-        });
-        onUser(null);
-      }
+  if (providerId === "google.com") {
+    await reauthenticateWithPopup(user, googleProvider);
+    return "ok";
+  }
 
-      return;
-    }
+  if (!password) {
+    return "password-required";
+  }
 
-    hasSeenFirebaseUser = true;
-    const user = mapFirebaseUserToAppUser(firebaseUser, loadAppState().user);
-
-    saveAppState({
-      ...loadAppState(),
-      user,
-    });
-
-    onUser(user);
-  });
-}
-
-export function loginWithLocalProfile(username: string, email: string): User {
-  const user = normalizeAppUser({
-    username,
-    email,
-    coins: 0,
-    authProvider: "local",
-  });
-
-  saveAppState({
-    ...loadAppState(),
+  await reauthenticateWithCredential(
     user,
-  });
-
-  return user;
+    EmailAuthProvider.credential(user.email ?? "", password),
+  );
+  return "ok";
 }
 
-export function updateLocalUser(user: User): User {
-  const nextUser = normalizeAppUser(user);
+/** Deletes the Firebase Authentication account (call AFTER deleting user data). */
+export async function deleteCurrentUser(): Promise<void> {
+  const auth = getFirebaseAuth();
+  const user = auth.currentUser;
 
-  saveAppState({
-    ...loadAppState(),
-    user: nextUser,
-  });
+  if (!user) {
+    throw new Error("You are not signed in.");
+  }
 
-  return nextUser;
+  await deleteUser(user);
 }
 
 export function mapFirebaseUserToAppUser(
   firebaseUser: FirebaseUser,
   existingUser = loadAppState().user,
 ): User {
-  const email = firebaseUser.email?.trim();
-
-  if (!email) {
-    throw new Error("Your Google account does not provide an email address.");
-  }
+  const email = firebaseUser.email?.trim() ?? "";
+  const fallbackName = email ? email.split("@")[0] : "";
 
   return normalizeAppUser({
     uid: firebaseUser.uid,
     username:
-      firebaseUser.displayName?.trim() || email.split("@")[0] || "Student",
+      firebaseUser.displayName?.trim() ||
+      fallbackName ||
+      existingUser?.username ||
+      "Student",
     email,
     coins: existingUser?.coins ?? 0,
-    authProvider: "google",
+    authProvider: getAuthProvider(firebaseUser),
   });
 }
 
+function getAuthProvider(firebaseUser: FirebaseUser): User["authProvider"] {
+  const providerId = firebaseUser.providerData[0]?.providerId;
+  return providerId === "google.com" ? "google" : "email";
+}
+
 function normalizeAppUser(user: UserInput): User {
-  const username = user.username.trim().slice(0, 32);
+  const username = user.username.trim().slice(0, 32) || "Student";
   const email = user.email.trim().slice(0, 80);
   const uid = user.uid?.trim().slice(0, 128);
-
-  if (!username || !email) {
-    throw new Error("Username and email are required.");
-  }
 
   return {
     ...(uid ? { uid } : {}),
     username,
     email,
     coins: Math.max(0, Math.floor(user.coins)),
-    authProvider: user.authProvider === "google" ? "google" : "local",
+    authProvider: user.authProvider === "google" ? "google" : "email",
+    // Placeholders — the live streak comes from the Firestore profile via
+    // buildCloudAppState; this User is only used for its uid + authProvider.
+    streakCount: 0,
+    streakLongest: 0,
+    streakLastActiveDate: "",
+    streakFreezes: 0,
   };
 }

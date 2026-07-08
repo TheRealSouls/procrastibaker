@@ -1,33 +1,33 @@
-import type { View } from "../types";
+import { NavLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import barChartIcon from "../media/sprites/bar_chart.png";
 import clockIcon from "../media/sprites/clock.png";
 import houseIcon from "../media/sprites/house.png";
+import magnifyingGlassIcon from "../media/sprites/magnifying_glass.png";
 import muffinIcon from "../media/sprites/muffin.png";
 import shoppingCartIcon from "../media/sprites/shopping_cart.png";
 
-const navItems: { icon: string; id: View; label: string }[] = [
-  { icon: houseIcon, id: "dashboard", label: "Dashboard" },
-  { icon: clockIcon, id: "timer", label: "Timer" },
-  { icon: muffinIcon, id: "bakery", label: "Bakery" },
-  { icon: shoppingCartIcon, id: "shop", label: "Shop" },
-  { icon: barChartIcon, id: "stats", label: "Stats" },
-];
+const navItems = [
+  { icon: houseIcon, to: "/dashboard", labelKey: "nav.dashboard" },
+  { icon: clockIcon, to: "/timer", labelKey: "nav.timer" },
+  { icon: muffinIcon, to: "/bakery", labelKey: "nav.bakery" },
+  { icon: shoppingCartIcon, to: "/shop", labelKey: "nav.shop" },
+  { icon: barChartIcon, to: "/stats", labelKey: "nav.stats" },
+  { icon: magnifyingGlassIcon, to: "/feedback", labelKey: "nav.feedback" },
+] as const;
 
-type AppNavProps = {
-  currentView: View;
-  onChange: (view: View) => void;
-};
+export function AppNav() {
+  const { t } = useTranslation();
 
-export function AppNav({ currentView, onChange }: AppNavProps) {
   return (
-    <nav className="app-nav" aria-label="Primary navigation">
+    <nav className="app-nav" aria-label={t("nav.primaryLabel")}>
       {navItems.map((item) => (
-        <button
-          aria-current={currentView === item.id ? "page" : undefined}
-          className={currentView === item.id ? "nav-button active" : "nav-button"}
-          key={item.id}
-          onClick={() => onChange(item.id)}
-          type="button"
+        <NavLink
+          className={({ isActive }) =>
+            isActive ? "nav-button active" : "nav-button"
+          }
+          key={item.to}
+          to={item.to}
         >
           <img
             alt=""
@@ -39,8 +39,8 @@ export function AppNav({ currentView, onChange }: AppNavProps) {
             }}
             src={item.icon}
           />
-          {item.label}
-        </button>
+          {t(item.labelKey)}
+        </NavLink>
       ))}
     </nav>
   );

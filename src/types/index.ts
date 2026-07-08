@@ -5,7 +5,8 @@ export type View =
   | "timer"
   | "bakery"
   | "shop"
-  | "stats";
+  | "stats"
+  | "feedback";
 
 export type StudyTag = {
   id: string;
@@ -17,9 +18,16 @@ export type StudyTag = {
 export type User = {
   uid?: string;
   username: string;
+  // Empty for anonymous (guest) users — they have no email until they link Google.
   email: string;
   coins: number;
-  authProvider: "local" | "google";
+  authProvider: "local" | "google" | "anonymous" | "email";
+  // Streak (Duolingo-style). streakLastActiveDate is a local "YYYY-MM-DD" key,
+  // "" if no bake has ever been completed.
+  streakCount: number;
+  streakLongest: number;
+  streakLastActiveDate: string;
+  streakFreezes: number;
 };
 
 export type Pastry = {

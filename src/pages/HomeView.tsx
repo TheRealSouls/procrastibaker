@@ -1,8 +1,10 @@
+import { Link } from "react-router-dom";
 import { ScrollReveal } from "../components/ScrollReveal";
 import { PastryVisual } from "../components/PastryVisual";
 import { pastries } from "../data/pastries";
 import bakeryImage from "../media/bakery.jpg";
 import croissantIcon from "../media/sprites/icon.png";
+import matasImage from "../media/matas-roda.png";
 
 type HomeViewProps = {
   onStart: () => void;
@@ -73,43 +75,6 @@ const features = [
   },
 ];
 
-const metrics = [
-  {
-    value: "50%",
-    label: "more completed focus sessions*",
-  },
-  {
-    value: "3x",
-    label: "more satisfying than staring at a plain timer*",
-  },
-  {
-    value: "120",
-    label: "minute maximum focus sessions",
-  },
-  {
-    value: "5",
-    label: "minute adjustable intervals",
-  },
-];
-
-const testimonials = [
-  {
-    quote:
-      "I opened the app to study chemistry and somehow became emotionally attached to a pixel cookie. Terrifyingly effective.",
-    role: "Leaving Cert student",
-  },
-  {
-    quote:
-      "The expired pastry bin personally attacked me, so I finished my revision session out of spite.",
-    role: "Professional Procrastinator",
-  },
-  {
-    quote:
-      "It made studying feel less like punishment and more like running a tiny bakery with academic consequences.",
-    role: "College student",
-  },
-];
-
 function getPastry(pastryId: string) {
   return pastries.find((pastry) => pastry.id === pastryId) ?? pastries[0];
 }
@@ -134,7 +99,7 @@ export function HomeView({ onStart }: HomeViewProps) {
               draggable={false}
               src={croissantIcon}
             />
-            <strong>{appName}</strong>
+            <strong className="app-wordmark">{appName}</strong>
           </a>
           <div className="landing-nav__links">
             <a href="#how-it-works">How it works</a>
@@ -250,57 +215,6 @@ export function HomeView({ onStart }: HomeViewProps) {
         </div>
       </ScrollReveal>
 
-      <ScrollReveal className="landing-section landing-section--metrics">
-        <div className="landing-section__heading">
-          <p className="landing-kicker">Proof of bake</p>
-          <h2>Built around practical study sessions, not miracle claims.</h2>
-        </div>
-        <div className="landing-metric-grid">
-          {metrics.map((metric) => (
-            <article className="landing-metric-card" key={metric.label}>
-              <strong>{metric.value}</strong>
-              <span>{metric.label}</span>
-            </article>
-          ))}
-        </div>
-        <p className="landing-disclaimer">
-          *Prototype/demo metrics for presentation purposes. Replace with real
-          user data after testing.
-        </p>
-      </ScrollReveal>
-
-      <ScrollReveal className="landing-section landing-section--testimonials">
-        <div className="landing-section__heading">
-          <p className="landing-kicker">Council of Matas</p>
-          <h2>Three placeholder reviewers. One shared name.</h2>
-        </div>
-        <div className="landing-marquee" aria-label="Student testimonials">
-          <div className="landing-marquee__track">
-            {[false, true].map((isDuplicate) => (
-              <div
-                aria-hidden={isDuplicate ? true : undefined}
-                className="landing-marquee__group"
-                key={isDuplicate ? "duplicate" : "primary"}
-              >
-                {testimonials.map((testimonial) => (
-                  <article
-                    className="landing-testimonial-card"
-                    key={`${isDuplicate ? "copy" : "original"}-${testimonial.role}`}
-                  >
-                    <span className="landing-stars" aria-label="5 stars">
-                      ★★★★★
-                    </span>
-                    <p>&ldquo;{testimonial.quote}&rdquo;</p>
-                    <strong>Matas</strong>
-                    <small>{testimonial.role}</small>
-                  </article>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-      </ScrollReveal>
-
       <ScrollReveal className="landing-section landing-section--preview" id="preview">
         <div className="landing-section__heading">
           <p className="landing-kicker">App preview</p>
@@ -379,6 +293,39 @@ export function HomeView({ onStart }: HomeViewProps) {
         </div>
       </ScrollReveal>
 
+      <ScrollReveal className="landing-section landing-section--open-source">
+        <div className="landing-opensource">
+          <figure className="landing-builder">
+            <img
+              alt="Matas Roda presenting Procrastibaker on stage at Dogpatch Labs"
+              className="landing-builder__photo"
+              draggable={false}
+              src={matasImage}
+            />
+            <figcaption className="landing-builder__caption">
+              Built by Matas Roda
+            </figcaption>
+          </figure>
+          <div className="landing-opensource__copy">
+            <p className="landing-kicker">Open source</p>
+            <h2>Procrastibaker is open source.</h2>
+            <p>
+              The bakery is open to everyone. Otherwise, how would you even make
+              coins?
+            </p>
+            <a
+              className="button primary landing-button landing-opensource__cta"
+              href={githubUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
+              <i className="fa-brands fa-github" aria-hidden="true" />
+              <span>View on GitHub</span>
+            </a>
+          </div>
+        </div>
+      </ScrollReveal>
+
       <ScrollReveal className="landing-final-cta">
         <div>
           <p className="landing-kicker">Ready?</p>
@@ -395,10 +342,10 @@ export function HomeView({ onStart }: HomeViewProps) {
 
       <footer className="landing-footer">
         <div>
-          <strong>{appName}</strong>
+          <strong className="app-wordmark">{appName}</strong>
           <p>
             A cozy study timer where every focused block comes out of the oven.
-            All you knead is love.
+            All you knead is love. :)
           </p>
         </div>
         <nav aria-label="Project links">
@@ -412,6 +359,11 @@ export function HomeView({ onStart }: HomeViewProps) {
             <i className="fa-brands fa-linkedin fa-2x" aria-hidden="true" />
             <span>LinkedIn</span>
           </a>
+        </nav>
+        <nav aria-label="Legal" className="landing-footer__legal">
+          <Link to="/privacy">Privacy Policy</Link>
+          <Link to="/terms">Terms of Service</Link>
+          <Link to="/cookies">Cookie Policy</Link>
         </nav>
       </footer>
     </main>

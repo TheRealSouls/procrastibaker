@@ -1,0 +1,158 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function isOptionalTimestamp(data, field) {
+      return !(field in data) || data[field] is timestamp;
+    }
+
+    function isOptionalCount(data, field) {
+      return !(field in data) || (data[field] is number && data[field] >= 0);
+    }
+
+    function isOptionalShortString(data, field) {
+      return !(field in data) || (data[field] is string && data[field].size() <= 16);
+    }
+
+    function isAudioSettings(value) {
+      return value is map
+        && value.keys().hasOnly(['soundEnabled', 'soundVolume'])
+        && value.keys().hasAll(['soundEnabled', 'soundVolume'])
+        && value.soundEnabled is bool
+        && value.soundVolume is number
+        && value.soundVolume >= 0
+        && value.soundVolume <= 100;
+    }
+
+    function isUserProfile() {
+      let data = request.resource.data;
+
+      return data.keys().hasOnly([
+          'username',
+          'email',
+          'coins',
+          'selectedPastryId',
+          'unlockedPastryIds',
+          'audioSettings',
+          'localStorageMigrated',
+          'streakCount',
+          'streakLongest',
+          'streakLastActiveDate',
+          'streakFreezes',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.username is string
+        && data.username.size() > 0
+        && data.username.size() <= 32
+        && data.email is string
+        && data.email.size() <= 120
+        && data.coins is number
+        && data.coins >= 0
+        && data.selectedPastryId is string
+        && data.selectedPastryId.size() > 0
+        && data.selectedPastryId.size() <= 64
+        && data.unlockedPastryIds is list
+        && data.unlockedPastryIds.size() > 0
+        && data.unlockedPastryIds.size() <= 32
+        && isAudioSettings(data.audioSettings)
+        && data.localStorageMigrated is bool
+        && isOptionalCount(data, 'streakCount')
+        && isOptionalCount(data, 'streakLongest')
+        && isOptionalCount(data, 'streakFreezes')
+        && isOptionalShortString(data, 'streakLastActiveDate')
+        && isOptionalTimestamp(data, 'createdAt')
+        && isOptionalTimestamp(data, 'updatedAt');
+    }
+
+    function isStudySession() {
+      let data = request.resource.data;
+
+      return data.keys().hasOnly([
+          'pastryId',
+          'pastryName',
+          'tagId',
+          'tagName',
+          'tagColor',
+          'durationMinutes',
+          'startedAt',
+          'endedAt',
+          'completed',
+          'expired',
+          'platform',
+          'createdAt'
+        ])
+        && data.pastryId is string
+        && data.pastryId.size() > 0
+        && data.pastryId.size() <= 64
+        && data.pastryName is string
+        && data.pastryName.size() > 0
+        && data.pastryName.size() <= 48
+        && data.tagId is string
+        && data.tagId.size() > 0
+        && data.tagId.size() <= 80
+        && data.tagName is string
+        && data.tagName.size() > 0
+        && data.tagName.size() <= 24
+        && data.tagColor is string
+        && data.tagColor.size() <= 16
+        && data.durationMinutes is number
+        && data.durationMinutes >= 10
+        && data.durationMinutes <= 120
+        && data.startedAt is string
+        && data.startedAt.size() > 0
+        && data.startedAt.size() <= 40
+        && data.endedAt is string
+        && data.endedAt.size() > 0
+        && data.endedAt.size() <= 40
+        && data.completed is bool
+        && data.expired is bool
+        && data.platform in ['web', 'android']
+        && isOptionalTimestamp(data, 'createdAt');
+    }
+
+    function isStudyTag() {
+      let data = request.resource.data;
+
+      return data.keys().hasOnly([
+          'name',
+          'color',
+          'isDefault',
+          'createdAt'
+        ])
+        && data.name is string
+        && data.name.size() > 0
+        && data.name.size() <= 24
+        && data.color is string
+        && data.color.size() <= 16
+        && data.isDefault is bool
+        && isOptionalTimestamp(data, 'createdAt');
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create, update: if isOwner(uid) && isUserProfile();
+      allow delete: if isOwner(uid);
+
+      match /sessions/{sessionId} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isStudySession();
+        allow delete: if isOwner(uid);
+      }
+
+      match /tags/{tagId} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isStudyTag();
+        allow delete: if isOwner(uid);
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
