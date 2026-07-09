@@ -101,7 +101,6 @@ function TimerRoute() {
     appState,
     handleCancelSession,
     handleCompleteSession,
-    handleAudioSettingsChange,
     handleSelectPastry,
     handleTagsChange,
   } = useApp();
@@ -111,7 +110,6 @@ function TimerRoute() {
       state={appState}
       onCancelSession={handleCancelSession}
       onCompleteSession={handleCompleteSession}
-      onAudioSettingsChange={handleAudioSettingsChange}
       onSelectPastry={handleSelectPastry}
       onTagsChange={handleTagsChange}
     />

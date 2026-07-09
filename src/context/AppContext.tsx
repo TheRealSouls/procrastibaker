@@ -17,6 +17,7 @@ import {
   trackView,
 } from "../services/analytics";
 import type { AppState, AudioSettings, StudySession, StudyTag } from "../types";
+import type { UsernameChangeResult } from "../services/userProfileService";
 import { resetAppState } from "../utils/appStorage";
 import {
   deleteCurrentUser,
@@ -49,7 +50,7 @@ type AppContextValue = {
   handlePasswordReset: (email: string) => void;
   handleLogout: () => void;
   handleResetData: () => void;
-  handleUsernameChange: (username: string) => void;
+  handleUsernameChange: (username: string) => Promise<UsernameChangeResult>;
   handleSelectPastry: (pastryId: string) => void;
   handleBuyPastry: (pastryId: string) => void;
   handleBuyStreakFreeze: () => void;
@@ -98,11 +99,13 @@ export function AppProvider() {
     loading: isAppStateLoading,
     error: appStateError,
     updateUserProfile,
+    changeUsername,
     addCompletedSession,
     addExpiredSession,
     updateCoins,
     updateSelectedPastry,
     addTag,
+    updateTag,
     deleteTag,
     runLocalStorageMigration,
   } = useCloudAppState();
@@ -221,7 +224,7 @@ export function AppProvider() {
   }
 
   function handleUsernameChange(username: string) {
-    void updateUserProfile({ username });
+    return changeUsername(username);
   }
 
   function handleSelectPastry(pastryId: string) {
@@ -281,12 +284,16 @@ export function AppProvider() {
   }
 
   function handleTagsChange(tags: StudyTag[]) {
-    const currentTagIds = new Set(appState.tags.map((tag) => tag.id));
+    const currentTags = new Map(appState.tags.map((tag) => [tag.id, tag]));
     const nextTagIds = new Set(tags.map((tag) => tag.id));
 
     for (const tag of tags) {
-      if (!currentTagIds.has(tag.id)) {
+      const existing = currentTags.get(tag.id);
+
+      if (!existing) {
         void addTag(tag);
+      } else if (existing.color !== tag.color || existing.name !== tag.name) {
+        void updateTag(tag);
       }
     }
 

@@ -55,6 +55,16 @@ export function TagSelector({
     setError("");
   }
 
+  function changeTagColor(tagId: string, nextColor: string) {
+    const color = isHexColor(nextColor) ? nextColor : fallbackTagColor;
+    const nextTags = tags.map((tag) =>
+      tag.id === tagId ? { ...tag, color } : tag,
+    );
+
+    onTagsChange(nextTags);
+    setError("");
+  }
+
   function deleteTag(tagId: string) {
     const tag = tags.find((item) => item.id === tagId);
 
@@ -155,24 +165,36 @@ export function TagSelector({
                 <span className="tag-dot" aria-hidden="true" />
                 <span>{tag.name}</span>
               </span>
-              <button
-                aria-label={
-                  canDeleteTags
-                    ? `Delete ${tag.name} tag`
-                    : "Cannot delete the last study tag"
-                }
-                className="button tag-delete-button"
-                disabled={!canDeleteTags}
-                onClick={() => deleteTag(tag.id)}
-                title={
-                  canDeleteTags
-                    ? `Delete ${tag.name}`
-                    : "You need at least one study tag"
-                }
-                type="button"
-              >
-                Delete
-              </button>
+              <div className="tag-list-item__actions">
+                <input
+                  aria-label={`Change ${tag.name} colour`}
+                  className="tag-color-input tag-color-input--sm"
+                  onChange={(event) =>
+                    changeTagColor(tag.id, event.target.value)
+                  }
+                  title={`Change ${tag.name} colour`}
+                  type="color"
+                  value={isHexColor(tag.color) ? tag.color : fallbackTagColor}
+                />
+                <button
+                  aria-label={
+                    canDeleteTags
+                      ? `Delete ${tag.name} tag`
+                      : "Cannot delete the last study tag"
+                  }
+                  className="button tag-delete-button"
+                  disabled={!canDeleteTags}
+                  onClick={() => deleteTag(tag.id)}
+                  title={
+                    canDeleteTags
+                      ? `Delete ${tag.name}`
+                      : "You need at least one study tag"
+                  }
+                  type="button"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>

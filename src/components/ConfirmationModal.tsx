@@ -1,4 +1,5 @@
 import { type KeyboardEvent, useEffect, useRef } from "react";
+import trashSprite from "../media/sprites/trash.png";
 
 type ConfirmationModalProps = {
   title: string;
@@ -7,6 +8,8 @@ type ConfirmationModalProps = {
   confirmLabel: string;
   onCancel: () => void;
   onConfirm: () => void;
+  /** Overrides the default trash-bin sprite (e.g. a door for "leave session"). */
+  icon?: string;
 };
 
 export function ConfirmationModal({
@@ -16,6 +19,7 @@ export function ConfirmationModal({
   confirmLabel,
   onCancel,
   onConfirm,
+  icon,
 }: ConfirmationModalProps) {
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
@@ -57,7 +61,16 @@ export function ConfirmationModal({
         role="dialog"
       >
         <div className="confirmation-modal__icon" aria-hidden="true">
-          {"\u{1F5D1}\u{FE0F}"}
+          {icon === undefined ? (
+            <img
+              alt=""
+              className="confirmation-modal__icon-img"
+              draggable={false}
+              src={trashSprite}
+            />
+          ) : (
+            icon
+          )}
         </div>
         <h2 id="confirmation-title">{title}</h2>
         <p id="confirmation-message">{message}</p>

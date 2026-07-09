@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { onIdTokenChanged } from "firebase/auth";
+import { Timestamp } from "firebase/firestore";
 import { pastries } from "../data/pastries";
 import { DEFAULT_TAGS } from "../data/tags";
 import {
@@ -12,14 +13,17 @@ import {
   deleteTag as deleteFirestoreTag,
   listenToTags,
   seedDefaultTagsIfMissing,
+  updateTag as updateFirestoreTag,
   type SyncedStudyTag,
 } from "../services/tagService";
 import {
+  changeUsername as changeFirestoreUsername,
   createUserProfileIfMissing,
   listenToUserProfile,
   updateUserProfile as updateFirestoreUserProfile,
   type UserProfile,
   type UserProfileUpdates,
+  type UsernameChangeResult,
 } from "../services/userProfileService";
 import type { AppState, StudySession, StudyTag, User } from "../types";
 import { createDefaultAppState } from "../utils/appStorage";
@@ -231,6 +235,33 @@ export function useCloudAppState() {
     return saved;
   }
 
+  async function changeUsername(rawName: string): Promise<UsernameChangeResult> {
+    const uid = profile ? cloudUser?.uid : undefined;
+
+    if (!uid || !profile) {
+      return { status: "error" };
+    }
+
+    const result = await changeFirestoreUsername(uid, rawName, {
+      username: profile.username,
+      usernameChangedAt: profile.usernameChangedAt,
+    });
+
+    if (result.status === "ok") {
+      setProfile((current) =>
+        current
+          ? {
+              ...current,
+              username: result.username,
+              usernameChangedAt: Timestamp.now(),
+            }
+          : current,
+      );
+    }
+
+    return result;
+  }
+
   async function addCompletedSession(session: StudySession) {
     return saveSession({ ...ensureSessionId(session), completed: true, expired: false });
   }
@@ -281,6 +312,30 @@ export function useCloudAppState() {
         current.some((item) => item.id === tag.id)
           ? current
           : [...current, { ...tag, createdAt: null }],
+      );
+    }
+
+    return saved;
+  }
+
+  async function updateTag(tag: StudyTag) {
+    const uid = profile ? cloudUser?.uid : undefined;
+
+    if (!uid || !tag.id.trim() || !tag.name.trim()) {
+      return false;
+    }
+
+    const saved = await updateFirestoreTag(uid, tag);
+
+    if (!saved) {
+      setError("Could not update your study tag.");
+    } else {
+      setTags((current) =>
+        current.map((item) =>
+          item.id === tag.id
+            ? { ...item, name: tag.name, color: tag.color }
+            : item,
+        ),
       );
     }
 
@@ -353,12 +408,14 @@ export function useCloudAppState() {
     loading,
     error,
     updateUserProfile,
+    changeUsername,
     addCompletedSession,
     addExpiredSession,
     updateCoins,
     updateSelectedPastry,
     updateUnlockedPastries,
     addTag,
+    updateTag,
     deleteTag,
     runLocalStorageMigration,
   };
@@ -399,6 +456,9 @@ function buildCloudAppState(
       email: profile.email,
       coins: profile.coins,
       authProvider: cloudUser.authProvider,
+      usernameChangedAt: profile.usernameChangedAt
+        ? profile.usernameChangedAt.toMillis()
+        : 0,
       streakCount: profile.streakCount,
       streakLongest: profile.streakLongest,
       streakLastActiveDate: profile.streakLastActiveDate,

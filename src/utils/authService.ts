@@ -151,8 +151,9 @@ function normalizeAppUser(user: UserInput): User {
     email,
     coins: Math.max(0, Math.floor(user.coins)),
     authProvider: user.authProvider === "google" ? "google" : "email",
-    // Placeholders — the live streak comes from the Firestore profile via
+    // Placeholders — the live values come from the Firestore profile via
     // buildCloudAppState; this User is only used for its uid + authProvider.
+    usernameChangedAt: 0,
     streakCount: 0,
     streakLongest: 0,
     streakLastActiveDate: "",

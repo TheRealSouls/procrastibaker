@@ -141,6 +141,7 @@ function normalizeUser(user: Record<string, unknown>): User {
     email: String(user.email).trim().slice(0, 80),
     coins: Math.max(0, Math.floor(Number(user.coins))),
     authProvider,
+    usernameChangedAt: toNonNegativeInt(user.usernameChangedAt),
     streakCount: toNonNegativeInt(user.streakCount),
     streakLongest: toNonNegativeInt(user.streakLongest),
     streakLastActiveDate: toDateKey(user.streakLastActiveDate),

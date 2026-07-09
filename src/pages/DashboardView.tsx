@@ -5,6 +5,10 @@ import { PastryVisual } from "../components/PastryVisual";
 import { StatCard } from "../components/StatCard";
 import { StreakBadge } from "../components/StreakBadge";
 import { pastries } from "../data/pastries";
+import {
+  USERNAME_COOLDOWN_MS,
+  type UsernameChangeResult,
+} from "../services/userProfileService";
 import type { AppState, View } from "../types";
 import { formatMinutes } from "../utils/sessionUtils";
 import { daysBetween, MAX_FREEZES, todayKey } from "../utils/streakUtils";
@@ -18,7 +22,7 @@ type DashboardViewProps = {
   onRunLocalMigration: () => void;
   state: AppState;
   onNavigate: (view: View) => void;
-  onUsernameChange: (username: string) => void;
+  onUsernameChange: (username: string) => Promise<UsernameChangeResult>;
   onResetData: () => void;
 };
 
@@ -40,9 +44,24 @@ export function DashboardView({
   onUsernameChange,
   onResetData,
 }: DashboardViewProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [username, setUsername] = useState(state.user?.username ?? "");
   const [usernameError, setUsernameError] = useState("");
+  const [usernameNotice, setUsernameNotice] = useState("");
+  const [savingUsername, setSavingUsername] = useState(false);
+  const usernameChangedAt = state.user?.usernameChangedAt ?? 0;
+  const nextChangeAt =
+    usernameChangedAt > 0 ? usernameChangedAt + USERNAME_COOLDOWN_MS : 0;
+  const cooldownActive = nextChangeAt > Date.now();
+
+  function formatChangeDate(ms: number) {
+    return new Date(ms).toLocaleDateString(i18n.language, {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  }
+
   const selectedPastry =
     pastries.find((pastry) => pastry.id === state.selectedPastryId) ??
     pastries[0];
@@ -60,20 +79,53 @@ export function DashboardView({
     state.user?.streakLastActiveDate ?? "",
   );
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+
+    if (savingUsername || cooldownActive) {
+      return;
+    }
 
     const nextUsername = username.trim();
     const error = validateUsername(nextUsername);
 
     if (error) {
+      setUsernameNotice("");
       setUsernameError(error);
       return;
     }
 
     setUsernameError("");
-    onUsernameChange(nextUsername);
-    setUsername(nextUsername);
+    setUsernameNotice("");
+    setSavingUsername(true);
+
+    try {
+      const result = await onUsernameChange(nextUsername);
+
+      switch (result.status) {
+        case "ok":
+          setUsername(result.username);
+          setUsernameNotice(t("dashboard.usernameSaved"));
+          break;
+        case "unchanged":
+          setUsername(nextUsername);
+          break;
+        case "taken":
+          setUsernameError(t("dashboard.usernameTaken"));
+          break;
+        case "cooldown":
+          setUsernameError(
+            t("dashboard.usernameCooldown", {
+              date: formatChangeDate(result.nextChangeAt),
+            }),
+          );
+          break;
+        default:
+          setUsernameError(t("dashboard.usernameError"));
+      }
+    } finally {
+      setSavingUsername(false);
+    }
   }
 
   return (
@@ -218,22 +270,42 @@ export function DashboardView({
               <input
                 aria-describedby="username-help"
                 autoComplete="username"
+                disabled={cooldownActive || savingUsername}
                 id="profile-username"
                 maxLength={32}
                 name="username"
                 onChange={(event) => {
                   setUsername(event.target.value);
                   setUsernameError("");
+                  setUsernameNotice("");
                 }}
                 pattern="[A-Za-z0-9]+"
                 title={t("dashboard.usernamePattern")}
                 value={username}
               />
-              <button className="button primary" type="submit">
+              <button
+                className="button primary"
+                disabled={cooldownActive || savingUsername}
+                type="submit"
+              >
                 {t("common.save")}
               </button>
             </div>
           </form>
+          {cooldownActive ? (
+            <p className="field-hint" role="status">
+              {t("dashboard.usernameCooldownNote", {
+                date: formatChangeDate(nextChangeAt),
+              })}
+            </p>
+          ) : (
+            <p className="field-hint">{t("dashboard.usernameOncePerWeek")}</p>
+          )}
+          {usernameNotice && (
+            <p className="auth-notice" role="status">
+              {usernameNotice}
+            </p>
+          )}
           {usernameError && (
             <p className="auth-error" role="alert">
               {usernameError}

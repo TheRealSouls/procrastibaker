@@ -533,6 +533,20 @@ label,
   max-width: 640px;
 }
 
+.login-back {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  color: var(--color-caramel);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.login-back:hover {
+  text-decoration: underline;
+}
+
 .google-login-button {
   width: 100%;
   gap: 0.55rem;
@@ -997,6 +1011,70 @@ label,
   gap: 1rem;
 }
 
+/* Grid items default to min-width: auto, which lets wide inner content push a
+   card past its track — and .page-card clips overflow, so it looks "cut off".
+   Allowing the columns to shrink keeps both cards inside the layout. */
+.timer-layout > * {
+  min-width: 0;
+}
+
+.timer-setup-aside {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+  min-width: 0;
+}
+
+.timer-progress-card {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.timer-progress-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.timer-progress-stats > div {
+  padding: 0.7rem 0.6rem;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-cream);
+  text-align: center;
+}
+
+.timer-progress-stats dt {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-caramel);
+  font-weight: 800;
+}
+
+.timer-progress-stats dd {
+  margin: 0.2rem 0 0;
+  font-size: 1.02rem;
+  font-weight: 900;
+  color: var(--color-cocoa);
+}
+
+.timer-progress-empty {
+  margin: 0;
+  padding: 0.85rem;
+  border: 1px dashed var(--color-line);
+  border-radius: 10px;
+  color: var(--color-caramel);
+  text-align: center;
+}
+
+@media (max-width: 960px) {
+  .timer-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 .timer-options {
   display: grid;
   gap: 0.75rem;
@@ -1185,6 +1263,23 @@ label,
   width: 54px;
   min-height: 44px;
   padding: 0.25rem;
+}
+
+.tag-color-input--sm {
+  width: 38px;
+  min-height: 34px;
+  padding: 0.15rem;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  background: var(--color-soft-white);
+  cursor: var(--cursor-interactive);
+}
+
+.tag-list-item__actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .tag-error {
@@ -1859,6 +1954,14 @@ label,
   font-size: 2rem;
 }
 
+.confirmation-modal__icon-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
 .confirmation-modal h2 {
   margin-bottom: 0.6rem;
 }
@@ -1869,6 +1972,54 @@ label,
   gap: 0.75rem;
   justify-content: flex-end;
   margin-top: 1rem;
+}
+
+.session-summary {
+  width: min(400px, 100%);
+  text-align: center;
+}
+
+.session-summary__visual {
+  width: 84px;
+  height: 84px;
+  margin: 0 auto 0.5rem;
+}
+
+.session-summary h2 {
+  margin-bottom: 0.35rem;
+}
+
+.session-summary__stats {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1.1rem 0 0;
+  text-align: left;
+}
+
+.session-summary__stats > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-cream);
+}
+
+.session-summary__stats dt {
+  font-weight: 800;
+  color: var(--color-cocoa);
+}
+
+.session-summary__stats dd {
+  margin: 0;
+  font-weight: 900;
+  color: var(--color-caramel);
+}
+
+.session-summary .confirmation-modal__actions {
+  justify-content: center;
 }
 
 @keyframes pastry-bob {
@@ -4127,20 +4278,74 @@ button:disabled,
 }
 
 /* ---------- Lo-fi music player ---------- */
-.lofi-player {
+.lofi-dock {
   position: fixed;
   bottom: 16px;
   right: 16px;
   z-index: 60;
   display: flex;
-  align-items: center;
+  flex-direction: column-reverse;
+  align-items: flex-end;
   gap: 10px;
-  padding: 8px 14px;
+}
+
+/* The floating note toggle is mobile-only; on desktop the panel is always
+   visible and the toggle stays hidden. */
+.lofi-dock__toggle {
+  display: none;
+}
+
+.lofi-player {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
   background: var(--color-paper);
   border: 1px solid var(--color-soft-border);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
-  max-width: min(380px, calc(100vw - 32px));
+  width: min(300px, calc(100vw - 32px));
+}
+
+.lofi-player__packs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.lofi-player__pack {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  border: 1px solid var(--color-soft-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-flour);
+  color: var(--color-cocoa);
+  cursor: var(--cursor-interactive);
+  font-size: 0.9rem;
+  transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+}
+
+.lofi-player__pack:hover {
+  background: var(--color-butter);
+}
+
+.lofi-player__pack.is-active {
+  background: var(--color-honey);
+  border-color: var(--color-caramel);
+  color: var(--color-soft-white);
+}
+
+.lofi-player__pack:focus-visible {
+  outline: 3px solid var(--color-caramel);
+  outline-offset: 2px;
+}
+
+.lofi-player__controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -4205,6 +4410,7 @@ button:disabled,
 .lofi-player__meta {
   display: flex;
   flex-direction: column;
+  flex: 1;
   min-width: 0;
   line-height: 1.2;
 }
@@ -4219,39 +4425,59 @@ button:disabled,
 
 .lofi-player__title {
   font-size: 0.82rem;
+  font-weight: 700;
   color: var(--color-brown);
-  max-width: 150px;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .lofi-player__volume {
+  /* Full height leaves vertical room for the 14px thumb; the visible track is
+     drawn per-engine below so the thumb sits centred on it in every browser. */
   width: 92px;
-  height: 6px;
+  height: 14px;
   flex-shrink: 0;
   -webkit-appearance: none;
   appearance: none;
+  background: transparent;
+  cursor: var(--cursor-interactive);
+}
+
+/* --fill (0-100%) is set inline from the current volume, so muting shows an
+   empty track with the thumb hard-left, consistently across browsers. */
+.lofi-player__volume::-webkit-slider-runnable-track {
+  height: 6px;
   border-radius: 999px;
-  /* --fill (0-100%) is set inline from the current volume, so muting shows an
-     empty track with the thumb hard-left, consistently across browsers. */
   background: linear-gradient(
     to right,
     var(--color-honey) var(--fill, 50%),
     rgba(91, 53, 31, 0.18) var(--fill, 50%)
   );
-  cursor: var(--cursor-interactive);
 }
 
 .lofi-player__volume::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
+  /* Centre the 14px thumb on the 6px track: (6 - 14) / 2 = -4px. */
+  margin-top: -4px;
   width: 14px;
   height: 14px;
   border-radius: 50%;
   background: var(--color-caramel);
   border: 2px solid var(--color-paper);
   box-shadow: var(--shadow-soft);
+}
+
+.lofi-player__volume::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--color-honey) var(--fill, 50%),
+    rgba(91, 53, 31, 0.18) var(--fill, 50%)
+  );
 }
 
 .lofi-player__volume::-moz-range-thumb {
@@ -4262,17 +4488,38 @@ button:disabled,
   border: 2px solid var(--color-paper);
 }
 
-@media (max-width: 560px) {
-  .lofi-player {
-    left: 16px;
-    right: 16px;
-    bottom: 12px;
-    max-width: none;
-    justify-content: center;
+/* Below the sidebar's mobile breakpoint the nav becomes a fixed bottom bar, so
+   the player collapses to a floating note button that lifts clear of it and
+   expands into the full panel on tap. */
+@media (max-width: 820px) {
+  .lofi-dock {
+    bottom: 90px;
+    right: 12px;
+    gap: 8px;
   }
 
-  .lofi-player__title {
-    max-width: 40vw;
+  .lofi-dock__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border: 1px solid var(--color-caramel);
+    border-radius: 50%;
+    background: var(--color-honey);
+    color: var(--color-soft-white);
+    box-shadow: var(--shadow-card);
+    font-size: 1.1rem;
+    cursor: var(--cursor-interactive);
+  }
+
+  .lofi-player {
+    display: none;
+    width: min(300px, calc(100vw - 24px));
+  }
+
+  .lofi-dock.is-open .lofi-player {
+    display: flex;
   }
 }
 

@@ -2,6 +2,7 @@ import {
   doc,
   getDoc,
   onSnapshot,
+  runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -27,9 +28,20 @@ export type UserProfile = {
   streakLongest: number;
   streakLastActiveDate: string;
   streakFreezes: number;
+  usernameChangedAt: Timestamp | null;
   createdAt: Timestamp | null;
   updatedAt: Timestamp | null;
 };
+
+// One username change per rolling week.
+export const USERNAME_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+
+export type UsernameChangeResult =
+  | { status: "ok"; username: string }
+  | { status: "unchanged" }
+  | { status: "taken" }
+  | { status: "cooldown"; nextChangeAt: number }
+  | { status: "error" };
 
 export type UserProfileUpdates = Partial<
   Pick<
@@ -93,6 +105,7 @@ export async function createUserProfileIfMissing(user: User) {
     return {
       uid,
       ...profile,
+      usernameChangedAt: null,
       createdAt: null,
       updatedAt: null,
     };
@@ -168,6 +181,84 @@ export async function updateUserProfile(
   }
 }
 
+class UsernameTakenError extends Error {}
+
+/**
+ * Changes a username atomically, enforcing global uniqueness via a
+ * `usernames/{lowercase}` claim collection whose create-only security rule makes
+ * a duplicate claim fail at the database. The 7-day cooldown is enforced here
+ * (client-side) against the stored `usernameChangedAt` timestamp.
+ */
+export async function changeUsername(
+  uid: string,
+  rawName: string,
+  current: Pick<UserProfile, "username" | "usernameChangedAt">,
+): Promise<UsernameChangeResult> {
+  const firestore = getOptionalFirestore();
+  const name = normalizeText(rawName, 32);
+
+  if (!firestore || !uid.trim() || !name) {
+    return { status: "error" };
+  }
+
+  if (name === current.username) {
+    return { status: "unchanged" };
+  }
+
+  const lastChangedMs = current.usernameChangedAt
+    ? current.usernameChangedAt.toMillis()
+    : 0;
+
+  if (lastChangedMs > 0) {
+    const nextChangeAt = lastChangedMs + USERNAME_COOLDOWN_MS;
+
+    if (Date.now() < nextChangeAt) {
+      return { status: "cooldown", nextChangeAt };
+    }
+  }
+
+  const newLower = name.toLowerCase();
+  const oldLower = current.username.toLowerCase();
+
+  try {
+    await runTransaction(firestore, async (transaction) => {
+      const userRef = doc(firestore, "users", uid);
+      const newNameRef = doc(firestore, "usernames", newLower);
+      const oldNameRef = doc(firestore, "usernames", oldLower);
+
+      const newNameSnap = await transaction.get(newNameRef);
+      // Only read (and later release) the old claim when the key really changes.
+      const oldNameSnap =
+        newLower === oldLower ? null : await transaction.get(oldNameRef);
+
+      if (newNameSnap.exists() && newNameSnap.data().uid !== uid) {
+        throw new UsernameTakenError();
+      }
+
+      transaction.set(newNameRef, { uid });
+
+      if (oldNameSnap?.exists() && oldNameSnap.data().uid === uid) {
+        transaction.delete(oldNameRef);
+      }
+
+      transaction.update(userRef, {
+        username: name,
+        usernameChangedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    });
+
+    return { status: "ok", username: name };
+  } catch (error) {
+    if (error instanceof UsernameTakenError) {
+      return { status: "taken" };
+    }
+
+    console.error("Firestore change username failed", error);
+    return { status: "error" };
+  }
+}
+
 function normalizeUserProfile(
   uid: string,
   value: Record<string, unknown>,
@@ -204,6 +295,9 @@ function normalizeUserProfile(
     streakLongest: clampNonNegativeInt(value.streakLongest),
     streakLastActiveDate: normalizeStreakDate(value.streakLastActiveDate),
     streakFreezes: Math.min(MAX_FREEZES, clampNonNegativeInt(value.streakFreezes)),
+    usernameChangedAt: isTimestamp(value.usernameChangedAt)
+      ? value.usernameChangedAt
+      : null,
     createdAt: isTimestamp(value.createdAt) ? value.createdAt : null,
     updatedAt: isTimestamp(value.updatedAt) ? value.updatedAt : null,
   };

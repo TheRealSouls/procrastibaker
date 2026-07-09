@@ -32,6 +32,7 @@
   },
   "login": {
     "title": "Sign in to Procrastibaker",
+    "backHome": "Back to home",
     "intro": "Create an account or sign in to start baking. Your bakery, pastries, coins, and streak are saved to your account and synced across your devices.",
     "continueGoogle": "Continue with Google",
     "orEmail": "or use your email",
@@ -88,6 +89,12 @@
     "usernameHelp": "Update the name shown around your study bakery. Letters and numbers only.",
     "currentUsername": "Current username",
     "usernamePattern": "Letters and numbers only — no spaces or symbols.",
+    "usernameOncePerWeek": "You can change your username once a week.",
+    "usernameCooldownNote": "You can change your username again on {{date}}.",
+    "usernameCooldown": "You can only change your username once a week. Try again on {{date}}.",
+    "usernameTaken": "That username is already taken. Try another one.",
+    "usernameError": "Couldn't update your username. Please try again.",
+    "usernameSaved": "Username updated!",
     "nudgeStart": "Finish a bake today to start your streak.",
     "nudgeSafe": "You've baked today — your streak is safe. 🔥",
     "nudgeKeep": "Bake today to keep your {{count}}-day streak alive. 🔥",
@@ -139,7 +146,24 @@
     "audioAmbience": "Oven ambience",
     "audioVolume": "Volume",
     "audioVolumeText": "{{value}}% volume",
-    "audioPercent": "{{value}}%"
+    "audioPercent": "{{value}}%",
+    "progressAria": "Your baking progress so far",
+    "progressTitle": "Your baking so far",
+    "progressFocus": "Total focus",
+    "progressBakes": "Pastries baked",
+    "progressStreak": "Current streak",
+    "progressEmpty": "Finish a session to start filling your focus calendar."
+  },
+  "summary": {
+    "title": "Fresh from the oven!",
+    "subtitle": "Nicely baked. Here's what this session earned you.",
+    "minutes": "Minutes studied",
+    "pastry": "Pastry baked",
+    "coins": "Coins earned",
+    "pastryAdded": "+1 {{name}}",
+    "coinsEarned_one": "+{{count}} coin",
+    "coinsEarned_other": "+{{count}} coins",
+    "continue": "Continue"
   },
   "shop": {
     "title": "Pastry shop",

@@ -62,6 +62,10 @@ export function LoginView({
 
   return (
     <section className="page-card login-card">
+      <Link className="login-back" to="/">
+        <i aria-hidden="true" className="fa-solid fa-arrow-left" />
+        {t("login.backHome")}
+      </Link>
       <div className="page-intro">
         <span className="intro-icon" aria-hidden="true">
           &#129360;

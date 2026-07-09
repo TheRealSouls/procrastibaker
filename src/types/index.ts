@@ -22,6 +22,9 @@ export type User = {
   email: string;
   coins: number;
   authProvider: "local" | "google" | "anonymous" | "email";
+  // Epoch ms of the last username change, 0 if never changed. Drives the
+  // once-per-week change cooldown in the UI.
+  usernameChangedAt: number;
   // Streak (Duolingo-style). streakLastActiveDate is a local "YYYY-MM-DD" key,
   // "" if no bake has ever been completed.
   streakCount: number;

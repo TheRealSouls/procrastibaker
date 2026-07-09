@@ -6,6 +6,7 @@ import {
   onSnapshot,
   serverTimestamp,
   setDoc,
+  updateDoc,
   writeBatch,
   type Timestamp,
   type Unsubscribe,
@@ -38,6 +39,28 @@ export async function createTag(uid: string, tag: StudyTag) {
     return true;
   } catch (error) {
     console.error("Firestore create tag failed", error);
+    return false;
+  }
+}
+
+// Updates an existing tag's editable fields (name/colour) without disturbing
+// createdAt. The security rules validate the merged document against isStudyTag.
+export async function updateTag(uid: string, tag: StudyTag) {
+  const firestore = getOptionalFirestore();
+  const name = tag.name.trim().slice(0, 24);
+
+  if (!firestore || !uid.trim() || !tag.id.trim() || !name) {
+    return false;
+  }
+
+  try {
+    await updateDoc(doc(firestore, "users", uid, "tags", tag.id), {
+      name,
+      color: isHexColor(tag.color) ? tag.color : fallbackTagColor,
+    });
+    return true;
+  } catch (error) {
+    console.error("Firestore update tag failed", error);
     return false;
   }
 }

@@ -43,6 +43,7 @@ service cloud.firestore {
           'streakLongest',
           'streakLastActiveDate',
           'streakFreezes',
+          'usernameChangedAt',
           'createdAt',
           'updatedAt'
         ])
@@ -65,6 +66,7 @@ service cloud.firestore {
         && isOptionalCount(data, 'streakLongest')
         && isOptionalCount(data, 'streakFreezes')
         && isOptionalShortString(data, 'streakLastActiveDate')
+        && isOptionalTimestamp(data, 'usernameChangedAt')
         && isOptionalTimestamp(data, 'createdAt')
         && isOptionalTimestamp(data, 'updatedAt');
     }
@@ -149,6 +151,19 @@ service cloud.firestore {
         allow create, update: if isOwner(uid) && isStudyTag();
         allow delete: if isOwner(uid);
       }
+    }
+
+    // Global username registry: one doc per lowercase name, holding the owner
+    // uid. Create-only (no update) so claiming a name another user already holds
+    // is denied atomically at the database — guaranteeing uniqueness. Owners may
+    // release their own claim when switching names.
+    match /usernames/{name} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid;
+      allow delete: if request.auth != null
+        && resource.data.uid == request.auth.uid;
     }
 
     match /{document=**} {
