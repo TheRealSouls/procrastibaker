@@ -33,6 +33,8 @@ export type User = {
   streakFreezes: number;
 };
 
+export type Season = "autumn";
+
 export type Pastry = {
   id: string;
   name: string;
@@ -41,6 +43,9 @@ export type Pastry = {
   bakeTimeMultiplier: number;
   unlockedByDefault: boolean;
   description: string;
+  // Seasonal pastries are only offered in the shop during their season; if left
+  // undefined the pastry is available all year round.
+  season?: Season;
 };
 
 export type StudySession = {

@@ -13,6 +13,7 @@ import { pastries } from "../data/pastries";
 import { DEFAULT_TAGS, findTagById } from "../data/tags";
 import { trackEvent } from "../services/analytics";
 import type { AppState, StudyTag } from "../types";
+import { isPastryVisible } from "../utils/season";
 import { calculateCoins, formatMinutes } from "../utils/sessionUtils";
 import { getHeatmapWeeks } from "../utils/statsUtils";
 
@@ -99,6 +100,10 @@ export function TimerView({
   );
   const pastriesBaked = state.completedSessions.length;
   const streakCount = state.user?.streakCount ?? 0;
+  // Hide out-of-season pastries from the picker unless the player owns them.
+  const visiblePastries = pastries.filter((pastry) =>
+    isPastryVisible(pastry, state.unlockedPastryIds),
+  );
   const hasFocusHistory = pastriesBaked > 0;
   const focusHeatmap = getHeatmapWeeks(state.completedSessions, 13);
 
@@ -563,7 +568,7 @@ export function TimerView({
 
         <PastrySelector
           onSelect={onSelectPastry}
-          pastries={pastries}
+          pastries={visiblePastries}
           selectedPastryId={selectedPastry.id}
           unlockedPastryIds={state.unlockedPastryIds}
         />

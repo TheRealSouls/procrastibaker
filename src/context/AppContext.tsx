@@ -29,6 +29,7 @@ import {
   signUpWithEmail,
 } from "../utils/authService";
 import { missingFirebaseConfigMessage } from "../utils/firebase";
+import { isPastryInSeason } from "../utils/season";
 import { calculateCoins } from "../utils/sessionUtils";
 import {
   applyStreakCheckIn,
@@ -241,7 +242,8 @@ export function AppProvider() {
       !pastry ||
       !appState.user ||
       appState.unlockedPastryIds.includes(pastry.id) ||
-      coins < pastry.price
+      coins < pastry.price ||
+      !isPastryInSeason(pastry)
     ) {
       return;
     }

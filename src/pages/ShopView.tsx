@@ -3,6 +3,7 @@ import { PastryCard } from "../components/PastryCard";
 import { pastries } from "../data/pastries";
 import snowflakeSprite from "../media/sprites/snowflake.png";
 import type { AppState } from "../types";
+import { isPastryVisible } from "../utils/season";
 import { MAX_FREEZES, STREAK_FREEZE_PRICE } from "../utils/streakUtils";
 
 type ShopViewProps = {
@@ -23,6 +24,10 @@ export function ShopView({
   const freezes = state.user?.streakFreezes ?? 0;
   const freezesMaxed = freezes >= MAX_FREEZES;
   const canBuyFreeze = !freezesMaxed && coins >= STREAK_FREEZE_PRICE;
+  // Seasonal pastries only appear while in season (owned ones always stay).
+  const visiblePastries = pastries.filter((pastry) =>
+    isPastryVisible(pastry, state.unlockedPastryIds),
+  );
 
   return (
     <div className="page-stack">
@@ -82,7 +87,7 @@ export function ShopView({
       </section>
 
       <section className="card-grid" aria-label={t("shop.itemsAria")}>
-        {pastries.map((pastry) => (
+        {visiblePastries.map((pastry) => (
           <PastryCard
             canAfford={coins >= pastry.price}
             isSelected={state.selectedPastryId === pastry.id}
