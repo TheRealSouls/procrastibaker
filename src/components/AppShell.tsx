@@ -1,6 +1,7 @@
 import { Navigate, NavLink, Outlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AppNav } from "./AppNav";
+import { EmailVerificationBanner } from "./EmailVerificationBanner";
 import { LofiPlayer } from "./LofiPlayer";
 import { StreakBadge } from "./StreakBadge";
 import { useApp } from "../context/AppContext";
@@ -116,6 +117,7 @@ export function AppShell() {
       </aside>
 
       <main className="main-content">
+        <EmailVerificationBanner />
         {appStateError && (
           <p className="auth-error" role="alert">
             {appStateError}

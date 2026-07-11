@@ -165,6 +165,16 @@
     "coinsEarned_other": "+{{count}} coins",
     "continue": "Continue"
   },
+  "verify": {
+    "title": "Verify your email",
+    "body": "We sent a confirmation link to {{email}}. Verify to secure your account and password resets.",
+    "resend": "Resend email",
+    "sending": "Sending...",
+    "resent": "Verification email sent — check your inbox (and spam).",
+    "refresh": "I've verified",
+    "checking": "Checking...",
+    "error": "Not verified yet. Open the link in your email, then try again."
+  },
   "shop": {
     "title": "Pastry shop",
     "intro": "Spend study coins on new pastries, then choose one as your active bake for future focus sessions.",

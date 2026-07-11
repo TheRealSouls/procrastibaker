@@ -24,7 +24,9 @@ import {
   loginWithGoogle,
   logout,
   reauthenticateCurrentUser,
+  refreshEmailVerified,
   sendPasswordReset,
+  sendVerificationEmail,
   signInWithEmail,
   signUpWithEmail,
 } from "../utils/authService";
@@ -49,6 +51,8 @@ type AppContextValue = {
   handleEmailSignIn: (email: string, password: string) => void;
   handleEmailSignUp: (email: string, password: string) => void;
   handlePasswordReset: (email: string) => void;
+  handleResendVerification: () => Promise<boolean>;
+  handleRefreshVerification: () => Promise<boolean>;
   handleLogout: () => void;
   handleResetData: () => void;
   handleUsernameChange: (username: string) => Promise<UsernameChangeResult>;
@@ -200,6 +204,28 @@ export function AppProvider() {
       setAuthError(getEmailAuthErrorMessage(error));
     } finally {
       setIsAuthLoading(false);
+    }
+  }
+
+  // Returns true when the email was sent. The banner owns the user-facing
+  // notice so this stays decoupled from the login-screen notices.
+  async function handleResendVerification(): Promise<boolean> {
+    try {
+      await sendVerificationEmail();
+      return true;
+    } catch (error) {
+      console.error("Resend verification email failed", error);
+      return false;
+    }
+  }
+
+  // Returns true once Firebase reports the address as verified.
+  async function handleRefreshVerification(): Promise<boolean> {
+    try {
+      return await refreshEmailVerified();
+    } catch (error) {
+      console.error("Refresh verification status failed", error);
+      return false;
     }
   }
 
@@ -525,6 +551,8 @@ export function AppProvider() {
     handleEmailSignIn,
     handleEmailSignUp,
     handlePasswordReset,
+    handleResendVerification,
+    handleRefreshVerification,
     handleLogout,
     handleResetData,
     handleUsernameChange,

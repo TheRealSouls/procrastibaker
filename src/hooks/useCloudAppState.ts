@@ -106,7 +106,8 @@ export function useCloudAppState() {
         setCloudUser((prev) =>
           prev &&
           prev.uid === nextUser.uid &&
-          prev.authProvider === nextUser.authProvider
+          prev.authProvider === nextUser.authProvider &&
+          prev.emailVerified === nextUser.emailVerified
             ? prev
             : nextUser,
         );
@@ -456,6 +457,7 @@ function buildCloudAppState(
       email: profile.email,
       coins: profile.coins,
       authProvider: cloudUser.authProvider,
+      emailVerified: cloudUser.emailVerified,
       usernameChangedAt: profile.usernameChangedAt
         ? profile.usernameChangedAt.toMillis()
         : 0,

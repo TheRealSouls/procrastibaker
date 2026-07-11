@@ -22,6 +22,9 @@ export type User = {
   email: string;
   coins: number;
   authProvider: "local" | "google" | "anonymous" | "email";
+  // Whether the account's email address has been verified. Google accounts are
+  // always verified; email/password accounts start false until they confirm.
+  emailVerified: boolean;
   // Epoch ms of the last username change, 0 if never changed. Drives the
   // once-per-week change cooldown in the UI.
   usernameChangedAt: number;
