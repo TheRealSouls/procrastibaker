@@ -532,7 +532,6 @@ export function TimerView({
             <ConfirmationModal
               cancelLabel={t("timer.stayBaking")}
               confirmLabel={t("timer.leaveExpire")}
-              icon={"\u{1F6AA}"}
               message={t("timer.blockerMsg")}
               onCancel={() => blocker.reset?.()}
               onConfirm={() => blocker.proceed?.()}

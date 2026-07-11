@@ -36,7 +36,7 @@ export type User = {
   streakFreezes: number;
 };
 
-export type Season = "autumn";
+export type Season = "autumn" | "december";
 
 export type Pastry = {
   id: string;

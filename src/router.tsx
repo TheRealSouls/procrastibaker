@@ -10,6 +10,7 @@ import { AccountView } from "./pages/AccountView";
 import { BakeryView } from "./pages/BakeryView";
 import { DashboardView } from "./pages/DashboardView";
 import { FeedbackView } from "./pages/FeedbackView";
+import { FriendsView } from "./pages/FriendsView";
 import { HomeView } from "./pages/HomeView";
 import { CookiePolicyView } from "./pages/legal/CookiePolicyView";
 import { PrivacyPolicyView } from "./pages/legal/PrivacyPolicyView";
@@ -165,6 +166,7 @@ export const router = createBrowserRouter([
           { path: "bakery", element: <BakeryRoute /> },
           { path: "shop", element: <ShopRoute /> },
           { path: "stats", element: <StatsRoute /> },
+          { path: "friends", element: <FriendsView /> },
           { path: "feedback", element: <FeedbackRoute /> },
           { path: "account", element: <AccountView /> },
         ],

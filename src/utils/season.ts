@@ -1,7 +1,7 @@
 import type { Pastry, Season } from "../types";
 
-// Northern-hemisphere meteorological seasons keyed by month (0 = January).
-// Only autumn is used today, but the map keeps the logic easy to extend.
+// Seasonal windows keyed by month (0 = January). Autumn spans Sept–Nov;
+// December is its own festive window for the Gingerbread Man.
 const SEASON_BY_MONTH: Record<number, Season | null> = {
   0: null, // Jan
   1: null, // Feb
@@ -14,7 +14,7 @@ const SEASON_BY_MONTH: Record<number, Season | null> = {
   8: "autumn", // Sep
   9: "autumn", // Oct
   10: "autumn", // Nov
-  11: null, // Dec
+  11: "december", // Dec
 };
 
 export function getSeason(date: Date = new Date()): Season | null {

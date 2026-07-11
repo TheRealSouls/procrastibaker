@@ -12,6 +12,7 @@
     "bakery": "Bakery",
     "shop": "Shop",
     "stats": "Stats",
+    "friends": "Friends",
     "feedback": "Feedback"
   },
   "shell": {
@@ -164,6 +165,34 @@
     "coinsEarned_one": "+{{count}} coin",
     "coinsEarned_other": "+{{count}} coins",
     "continue": "Continue"
+  },
+  "friends": {
+    "title": "Friends & leaderboard",
+    "intro": "Add friends by username and see who's put in the most focus time this week.",
+    "addHeading": "Add a friend",
+    "addLabel": "Friend's username",
+    "addPlaceholder": "Their username",
+    "addButton": "Send request",
+    "adding": "Sending...",
+    "addHint": "They need a unique username set on their dashboard to be found.",
+    "msgSent": "Friend request sent!",
+    "msgAccepted": "You're now friends — they'd already added you.",
+    "msgAlready": "You're already friends with them.",
+    "msgPending": "You've already sent them a request.",
+    "msgSelf": "You can't add yourself.",
+    "msgNotFound": "No baker found with that username.",
+    "msgError": "Something went wrong. Please try again.",
+    "incomingHeading": "Friend requests",
+    "accept": "Accept",
+    "decline": "Decline",
+    "leaderboardHeading": "Weekly leaderboard",
+    "leaderboardIntro": "Focus minutes this week",
+    "you": "You",
+    "friendsHeading": "Your friends",
+    "noFriends": "No friends yet — add someone by their username above.",
+    "remove": "Remove",
+    "outgoingPending_one": "{{count}} request pending.",
+    "outgoingPending_other": "{{count}} requests pending."
   },
   "verify": {
     "title": "Verify your email",

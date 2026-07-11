@@ -31,6 +31,12 @@ import {
   signUpWithEmail,
 } from "../utils/authService";
 import { missingFirebaseConfigMessage } from "../utils/firebase";
+import { upsertLeaderboardStats } from "../services/friendService";
+import {
+  totalFocusMinutes,
+  weeklyFocusMinutes,
+  weekKey,
+} from "../utils/leaderboard";
 import { isPastryInSeason } from "../utils/season";
 import { calculateCoins } from "../utils/sessionUtils";
 import {
@@ -133,6 +139,25 @@ export function AppProvider() {
   useEffect(() => {
     trackView(location.pathname);
   }, [location.pathname]);
+
+  // Keep this user's leaderboard entry fresh so friends see up-to-date focus
+  // minutes. Writes whenever the signed-in user's sessions/streak/name change.
+  const leaderboardUsername = appState.user?.username;
+  const leaderboardStreak = appState.user?.streakCount;
+  const completedSessions = appState.completedSessions;
+  useEffect(() => {
+    if (!userUid) {
+      return;
+    }
+
+    void upsertLeaderboardStats(userUid, {
+      username: leaderboardUsername ?? "Student",
+      weeklyMinutes: weeklyFocusMinutes(completedSessions),
+      weekKey: weekKey(),
+      totalMinutes: totalFocusMinutes(completedSessions),
+      streakCount: leaderboardStreak ?? 0,
+    });
+  }, [userUid, leaderboardUsername, leaderboardStreak, completedSessions]);
 
   async function handleGoogleLogin() {
     setAuthError("");

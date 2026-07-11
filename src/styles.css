@@ -380,6 +380,14 @@ label,
   visibility: hidden;
 }
 
+.sidebar-icon-fa {
+  width: 22px;
+  flex-shrink: 0;
+  font-size: 20px;
+  text-align: center;
+  color: var(--color-caramel);
+}
+
 .nav-button.active {
   border-color: rgba(199, 123, 48, 0.46);
   background:
@@ -4886,4 +4894,130 @@ button:disabled,
   to {
     transform: scaleY(1);
   }
+}
+
+/* ---------- Friends & leaderboard ---------- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.friends-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.friends-add input {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.friends-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.friends-list__item {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid rgba(91, 53, 31, 0.14);
+  border-radius: 10px;
+  background: rgba(255, 250, 240, 0.64);
+}
+
+.friends-list__name {
+  font-weight: 800;
+  color: var(--color-cocoa);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.friends-list__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.leaderboard {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: rank;
+}
+
+.leaderboard__row {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) auto auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-cream);
+}
+
+.leaderboard__row.is-me {
+  border-color: var(--color-caramel);
+  background:
+    linear-gradient(135deg, rgba(255, 241, 199, 0.9), rgba(255, 231, 170, 0.95)),
+    var(--color-butter);
+}
+
+.leaderboard__rank {
+  font-weight: 900;
+  color: var(--color-caramel);
+  text-align: center;
+}
+
+.leaderboard__name {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  min-width: 0;
+  font-weight: 800;
+  color: var(--color-cocoa);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.leaderboard__you {
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: var(--color-honey);
+  color: var(--color-soft-white);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.leaderboard__weekly {
+  font-weight: 900;
+  color: var(--color-cocoa);
+  white-space: nowrap;
+}
+
+.leaderboard__streak {
+  min-width: 3ch;
+  text-align: right;
+  color: var(--color-caramel);
+  font-weight: 800;
+  white-space: nowrap;
 }
