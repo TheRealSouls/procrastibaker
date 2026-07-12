@@ -5091,3 +5091,25 @@ button:disabled,
   width: auto;
   min-width: 0;
 }
+
+/* ---------- Native shell safe areas ---------- */
+/* env(safe-area-inset-*) is 0 in normal browsers, so this only affects notched
+   devices inside the Capacitor shell — keeps fixed bars clear of the status bar
+   and home indicator. */
+@media (max-width: 820px) {
+  .mobile-topbar {
+    padding-top: max(0.7rem, env(safe-area-inset-top));
+  }
+
+  .sidebar {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+
+  .app-shell {
+    padding-bottom: calc(82px + env(safe-area-inset-bottom));
+  }
+
+  .lofi-dock {
+    bottom: calc(90px + env(safe-area-inset-bottom));
+  }
+}

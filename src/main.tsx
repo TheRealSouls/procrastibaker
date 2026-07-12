@@ -4,12 +4,15 @@ import { RouterProvider } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { router } from "./router";
 import { initAnalytics } from "./services/analytics";
+import { initNativeShell } from "./utils/capacitor";
 import { initSentry } from "./utils/sentry";
 import "./i18n";
 import "./styles.css";
 
 initSentry();
 initAnalytics();
+// No-op on the web; sets up the status bar + hides the splash on native.
+void initNativeShell();
 
 function ErrorFallback() {
   return (
