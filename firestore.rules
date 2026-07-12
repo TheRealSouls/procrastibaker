@@ -140,6 +140,20 @@ service cloud.firestore {
         && isOptionalTimestamp(data, 'createdAt');
     }
 
+    // True when the signed-in user has an *accepted* friend link with ownerUid,
+    // in either direction. Used to gate reads of a user's leaderboard entry to
+    // confirmed friends only. Short-circuits so at most 2 lookups run.
+    function isAcceptedFriend(ownerUid) {
+      let viewer = request.auth.uid;
+      let forward =
+        /databases/$(database)/documents/friendRequests/$(viewer + '__' + ownerUid);
+      let backward =
+        /databases/$(database)/documents/friendRequests/$(ownerUid + '__' + viewer);
+
+      return (exists(forward) && get(forward).data.status == 'accepted')
+        || (exists(backward) && get(backward).data.status == 'accepted');
+    }
+
     function isLeaderboardStats() {
       let data = request.resource.data;
 
@@ -239,7 +253,9 @@ service cloud.firestore {
     // `get` a specific entry (friends read each other's by known uid) but the
     // collection cannot be listed/enumerated. Only the owner writes their own.
     match /leaderboardStats/{uid} {
-      allow get: if request.auth != null;
+      // Only the owner or a confirmed friend may read an entry (and never list).
+      allow get: if request.auth != null
+        && (request.auth.uid == uid || isAcceptedFriend(uid));
       allow list: if false;
       allow create, update: if request.auth != null
         && request.auth.uid == uid
