@@ -147,6 +147,12 @@ function normalizeUser(user: Record<string, unknown>): User {
     streakLongest: toNonNegativeInt(user.streakLongest),
     streakLastActiveDate: toDateKey(user.streakLastActiveDate),
     streakFreezes: toNonNegativeInt(user.streakFreezes),
+    dailyGoalMinutes:
+      typeof user.dailyGoalMinutes === "number" &&
+      Number.isFinite(user.dailyGoalMinutes)
+        ? Math.floor(user.dailyGoalMinutes)
+        : 60,
+    dailyGoalRewardedDate: toDateKey(user.dailyGoalRewardedDate),
   };
 }
 

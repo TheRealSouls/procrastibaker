@@ -441,6 +441,9 @@ function applyCloudProfileUpdates(
     streakLastActiveDate:
       updates.streakLastActiveDate ?? profile.streakLastActiveDate,
     streakFreezes: updates.streakFreezes ?? profile.streakFreezes,
+    dailyGoalMinutes: updates.dailyGoalMinutes ?? profile.dailyGoalMinutes,
+    dailyGoalRewardedDate:
+      updates.dailyGoalRewardedDate ?? profile.dailyGoalRewardedDate,
   };
 }
 
@@ -465,6 +468,8 @@ function buildCloudAppState(
       streakLongest: profile.streakLongest,
       streakLastActiveDate: profile.streakLastActiveDate,
       streakFreezes: profile.streakFreezes,
+      dailyGoalMinutes: profile.dailyGoalMinutes,
+      dailyGoalRewardedDate: profile.dailyGoalRewardedDate,
     },
     unlockedPastryIds: profile.unlockedPastryIds,
     tags: tags.length > 0 ? tags.map(stripSyncedTag) : DEFAULT_TAGS,

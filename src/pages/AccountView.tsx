@@ -7,6 +7,10 @@ import {
   isAnalyticsOptedOut,
   setAnalyticsOptedOut,
 } from "../services/analytics";
+import {
+  loadReminderPrefs,
+  saveReminderPrefs,
+} from "../utils/reminderStorage";
 
 type Busy = "idle" | "exporting" | "deleting";
 
@@ -190,6 +194,8 @@ export function AccountView() {
         </label>
       </section>
 
+      <ReminderSettings />
+
       <section className="page-card account-section account-danger">
         <h2>{t("account.deleteHeading")}</h2>
         <p>{t("account.deleteBody")}</p>
@@ -258,5 +264,76 @@ export function AccountView() {
         )}
       </section>
     </div>
+  );
+}
+
+function ReminderSettings() {
+  const { t } = useTranslation();
+  const supported =
+    typeof window !== "undefined" && "Notification" in window;
+  const [permission, setPermission] = useState<NotificationPermission | null>(
+    supported ? Notification.permission : null,
+  );
+  const [prefs, setPrefs] = useState(loadReminderPrefs);
+  const blocked = supported && permission === "denied";
+
+  async function handleToggle(enabled: boolean) {
+    if (enabled && supported && permission !== "granted") {
+      const result = await Notification.requestPermission();
+      setPermission(result);
+
+      if (result !== "granted") {
+        const next = { ...prefs, enabled: false };
+        setPrefs(next);
+        saveReminderPrefs(next);
+        return;
+      }
+    }
+
+    const next = { ...prefs, enabled };
+    setPrefs(next);
+    saveReminderPrefs(next);
+  }
+
+  function handleTime(time: string) {
+    const next = { ...prefs, time };
+    setPrefs(next);
+    saveReminderPrefs(next);
+  }
+
+  return (
+    <section className="page-card account-section">
+      <h2>{t("account.reminderHeading")}</h2>
+      <p>{t("account.reminderBody")}</p>
+
+      {!supported && (
+        <p className="field-hint">{t("account.reminderUnsupported")}</p>
+      )}
+      {blocked && <p className="field-hint">{t("account.reminderBlocked")}</p>}
+
+      <label className="account-toggle">
+        <input
+          checked={prefs.enabled}
+          disabled={!supported || blocked}
+          onChange={(event) => void handleToggle(event.target.checked)}
+          type="checkbox"
+        />
+        <span>{t("account.reminderToggle")}</span>
+      </label>
+
+      {prefs.enabled && (
+        <div className="reminder-time">
+          <label htmlFor="reminder-time">
+            {t("account.reminderTimeLabel")}
+          </label>
+          <input
+            id="reminder-time"
+            onChange={(event) => handleTime(event.target.value)}
+            type="time"
+            value={prefs.time}
+          />
+        </div>
+      )}
+    </section>
   );
 }

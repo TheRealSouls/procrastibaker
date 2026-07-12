@@ -32,7 +32,9 @@ import {
 } from "../utils/authService";
 import { missingFirebaseConfigMessage } from "../utils/firebase";
 import { upsertLeaderboardStats } from "../services/friendService";
+import { DAILY_GOAL_REWARD_COINS } from "../services/userProfileService";
 import {
+  focusMinutesOnDate,
   totalFocusMinutes,
   weeklyFocusMinutes,
   weekKey,
@@ -62,6 +64,7 @@ type AppContextValue = {
   handleLogout: () => void;
   handleResetData: () => void;
   handleUsernameChange: (username: string) => Promise<UsernameChangeResult>;
+  handleDailyGoalChange: (minutes: number) => void;
   handleSelectPastry: (pastryId: string) => void;
   handleBuyPastry: (pastryId: string) => void;
   handleBuyStreakFreeze: () => void;
@@ -279,6 +282,14 @@ export function AppProvider() {
     return changeUsername(username);
   }
 
+  function handleDailyGoalChange(minutes: number) {
+    if (!Number.isFinite(minutes)) {
+      return;
+    }
+
+    void updateUserProfile({ dailyGoalMinutes: Math.floor(minutes) });
+  }
+
   function handleSelectPastry(pastryId: string) {
     void updateSelectedPastry(pastryId);
   }
@@ -412,7 +423,29 @@ export function AppProvider() {
       });
 
       if (saved) {
-        await updateCoins({ delta: calculateCoins(durationMinutes) });
+        // Award the once-per-day goal bonus if this session crosses the target.
+        // Fold it into the single coin update so we don't double-read stale coins.
+        const user = appState.user;
+        const today = todayKey();
+        const goalMinutes = user?.dailyGoalMinutes ?? 0;
+        const minutesToday =
+          focusMinutesOnDate(appState.completedSessions) + durationMinutes;
+        const earnedGoalBonus =
+          goalMinutes > 0 &&
+          user?.dailyGoalRewardedDate !== today &&
+          minutesToday >= goalMinutes;
+
+        await updateCoins({
+          delta:
+            calculateCoins(durationMinutes) +
+            (earnedGoalBonus ? DAILY_GOAL_REWARD_COINS : 0),
+        });
+
+        if (earnedGoalBonus) {
+          await updateUserProfile({ dailyGoalRewardedDate: today });
+          trackEvent("daily_goal_met", { goalMinutes });
+        }
+
         await recordStreakCheckIn();
         trackEvent("bake_completed", {
           durationMinutes,
@@ -581,6 +614,7 @@ export function AppProvider() {
     handleLogout,
     handleResetData,
     handleUsernameChange,
+    handleDailyGoalChange,
     handleSelectPastry,
     handleBuyPastry,
     handleBuyStreakFreeze,

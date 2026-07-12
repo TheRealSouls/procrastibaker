@@ -79,6 +79,7 @@ function DashboardRoute() {
     handleFinishTestSession,
     handleRunLocalMigration,
     handleUsernameChange,
+    handleDailyGoalChange,
     handleResetData,
   } = useApp();
 
@@ -92,6 +93,7 @@ function DashboardRoute() {
       state={appState}
       onNavigate={(view: View) => navigate(`/${view}`)}
       onUsernameChange={handleUsernameChange}
+      onDailyGoalChange={handleDailyGoalChange}
       onResetData={handleResetData}
     />
   );

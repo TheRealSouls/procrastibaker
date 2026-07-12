@@ -2,17 +2,24 @@ import { FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DeveloperTools } from "../components/DeveloperTools";
 import { PastryVisual } from "../components/PastryVisual";
+import { ProgressBar } from "../components/ProgressBar";
 import { StatCard } from "../components/StatCard";
 import { StreakBadge } from "../components/StreakBadge";
 import { pastries } from "../data/pastries";
 import {
+  DAILY_GOAL_REWARD_COINS,
+  MAX_DAILY_GOAL_MINUTES,
+  MIN_DAILY_GOAL_MINUTES,
   USERNAME_COOLDOWN_MS,
   type UsernameChangeResult,
 } from "../services/userProfileService";
 import type { AppState, View } from "../types";
+import { focusMinutesOnDate } from "../utils/leaderboard";
 import { formatMinutes } from "../utils/sessionUtils";
 import { daysBetween, MAX_FREEZES, todayKey } from "../utils/streakUtils";
 import { validateUsername } from "../utils/validation";
+
+const DAILY_GOAL_STEP = 15;
 
 type DashboardViewProps = {
   onAddCoins: () => void;
@@ -23,6 +30,7 @@ type DashboardViewProps = {
   state: AppState;
   onNavigate: (view: View) => void;
   onUsernameChange: (username: string) => Promise<UsernameChangeResult>;
+  onDailyGoalChange: (minutes: number) => void;
   onResetData: () => void;
 };
 
@@ -42,6 +50,7 @@ export function DashboardView({
   state,
   onNavigate,
   onUsernameChange,
+  onDailyGoalChange,
   onResetData,
 }: DashboardViewProps) {
   const { t, i18n } = useTranslation();
@@ -73,6 +82,22 @@ export function DashboardView({
   const streakCount = state.user?.streakCount ?? 0;
   const streakLongest = state.user?.streakLongest ?? 0;
   const streakFreezes = state.user?.streakFreezes ?? 0;
+
+  const dailyGoalMinutes = state.user?.dailyGoalMinutes ?? 60;
+  const todayMinutes = focusMinutesOnDate(state.completedSessions);
+  const dailyGoalMet = todayMinutes >= dailyGoalMinutes;
+  const dailyGoalRemaining = Math.max(0, dailyGoalMinutes - todayMinutes);
+
+  function adjustDailyGoal(delta: number) {
+    const next = Math.min(
+      MAX_DAILY_GOAL_MINUTES,
+      Math.max(MIN_DAILY_GOAL_MINUTES, dailyGoalMinutes + delta),
+    );
+
+    if (next !== dailyGoalMinutes) {
+      onDailyGoalChange(next);
+    }
+  }
   const streakNudgeKey = getStreakNudgeKey(
     streakCount,
     streakFreezes,
@@ -235,6 +260,65 @@ export function DashboardView({
             </dd>
           </div>
         </dl>
+      </section>
+
+      <section
+        className="page-card daily-goal-card"
+        aria-labelledby="daily-goal-heading"
+      >
+        <div className="daily-goal-card__head">
+          <div>
+            <h2 id="daily-goal-heading">{t("dashboard.dailyGoalHeading")}</h2>
+            <p>
+              {dailyGoalMet
+                ? t("dashboard.dailyGoalMet", { coins: DAILY_GOAL_REWARD_COINS })
+                : t("dashboard.dailyGoalRemaining", {
+                    remaining: formatMinutes(dailyGoalRemaining),
+                  })}
+            </p>
+          </div>
+          <div className="daily-goal-card__stepper" role="group">
+            <button
+              aria-label={t("dashboard.dailyGoalDecrease")}
+              className="button"
+              disabled={dailyGoalMinutes <= MIN_DAILY_GOAL_MINUTES}
+              onClick={() => adjustDailyGoal(-DAILY_GOAL_STEP)}
+              type="button"
+            >
+              −
+            </button>
+            <span className="daily-goal-card__target">
+              {t("dashboard.dailyGoalTarget", {
+                minutes: formatMinutes(dailyGoalMinutes),
+              })}
+            </span>
+            <button
+              aria-label={t("dashboard.dailyGoalIncrease")}
+              className="button"
+              disabled={dailyGoalMinutes >= MAX_DAILY_GOAL_MINUTES}
+              onClick={() => adjustDailyGoal(DAILY_GOAL_STEP)}
+              type="button"
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <ProgressBar
+          ariaLabel={t("dashboard.dailyGoalAria")}
+          className="bar-track daily-goal-card__bar"
+          max={dailyGoalMinutes}
+          value={todayMinutes}
+          valueText={t("dashboard.dailyGoalProgress", {
+            done: formatMinutes(todayMinutes),
+            goal: formatMinutes(dailyGoalMinutes),
+          })}
+        />
+        <p className="daily-goal-card__progress">
+          {t("dashboard.dailyGoalProgress", {
+            done: formatMinutes(todayMinutes),
+            goal: formatMinutes(dailyGoalMinutes),
+          })}
+        </p>
       </section>
 
       <section

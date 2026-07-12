@@ -34,6 +34,10 @@ export type User = {
   streakLongest: number;
   streakLastActiveDate: string;
   streakFreezes: number;
+  // Daily focus target (minutes) and the last date its coin bonus was awarded
+  // ("YYYY-MM-DD", "" if never).
+  dailyGoalMinutes: number;
+  dailyGoalRewardedDate: string;
 };
 
 export type Season = "autumn" | "december";

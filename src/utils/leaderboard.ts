@@ -1,4 +1,5 @@
 import type { StudySession } from "../types";
+import { todayKey } from "./streakUtils";
 
 // The leaderboard ranks friends by focus minutes in the current (Monday-based)
 // week. weekKey is the ISO date of that Monday, stored alongside each entry so a
@@ -33,5 +34,21 @@ export function weeklyFocusMinutes(
 export function totalFocusMinutes(sessions: StudySession[]): number {
   return sessions
     .filter((session) => session.completed)
+    .reduce((total, session) => total + session.durationMinutes, 0);
+}
+
+// Completed focus minutes on a given local day (defaults to today) — powers the
+// daily-goal progress and its once-per-day bonus.
+export function focusMinutesOnDate(
+  sessions: StudySession[],
+  date: Date = new Date(),
+): number {
+  const key = todayKey(date);
+
+  return sessions
+    .filter(
+      (session) =>
+        session.completed && todayKey(new Date(session.endedAt)) === key,
+    )
     .reduce((total, session) => total + session.durationMinutes, 0);
 }

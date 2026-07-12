@@ -5,7 +5,9 @@ import { EmailVerificationBanner } from "./EmailVerificationBanner";
 import { LofiPlayer } from "./LofiPlayer";
 import { StreakBadge } from "./StreakBadge";
 import { useApp } from "../context/AppContext";
+import { useDailyReminder } from "../hooks/useDailyReminder";
 import croissantIcon from "../media/sprites/icon.png";
+import { focusMinutesOnDate } from "../utils/leaderboard";
 
 const appName = "Procrastibaker";
 const githubUrl = "https://github.com/TheRealSouls/procrastibaker";
@@ -14,6 +16,12 @@ export function AppShell() {
   const { t } = useTranslation();
   const { appState, isAppStateLoading, appStateError, isAuthLoading, handleLogout } =
     useApp();
+
+  const dailyGoalMet = appState.user
+    ? focusMinutesOnDate(appState.completedSessions) >=
+      appState.user.dailyGoalMinutes
+    : false;
+  useDailyReminder(dailyGoalMet);
 
   if (isAppStateLoading) {
     return (

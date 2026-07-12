@@ -5021,3 +5021,73 @@ button:disabled,
   font-weight: 800;
   white-space: nowrap;
 }
+
+/* ---------- Daily goal ---------- */
+.daily-goal-card {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.daily-goal-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.daily-goal-card__head h2 {
+  margin-bottom: 0.2rem;
+}
+
+.daily-goal-card__head p {
+  margin: 0;
+  color: var(--color-brown);
+}
+
+.daily-goal-card__stepper {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.daily-goal-card__stepper .button {
+  min-width: 40px;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.daily-goal-card__target {
+  min-width: 4.5ch;
+  text-align: center;
+  font-weight: 900;
+  color: var(--color-cocoa);
+}
+
+.daily-goal-card__bar {
+  margin: 0;
+}
+
+.daily-goal-card__progress {
+  margin: 0;
+  font-weight: 800;
+  color: var(--color-caramel);
+}
+
+.reminder-time {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  margin-top: 0.85rem;
+}
+
+.reminder-time label {
+  font-weight: 800;
+  color: var(--color-cocoa);
+}
+
+.reminder-time input {
+  width: auto;
+  min-width: 0;
+}

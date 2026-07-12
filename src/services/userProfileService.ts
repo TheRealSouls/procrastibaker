@@ -29,12 +29,20 @@ export type UserProfile = {
   streakLastActiveDate: string;
   streakFreezes: number;
   usernameChangedAt: Timestamp | null;
+  dailyGoalMinutes: number;
+  dailyGoalRewardedDate: string;
   createdAt: Timestamp | null;
   updatedAt: Timestamp | null;
 };
 
 // One username change per rolling week.
 export const USERNAME_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+
+// Daily focus goal (minutes) and the coin bonus for meeting it.
+export const DEFAULT_DAILY_GOAL_MINUTES = 60;
+export const MIN_DAILY_GOAL_MINUTES = 10;
+export const MAX_DAILY_GOAL_MINUTES = 600;
+export const DAILY_GOAL_REWARD_COINS = 25;
 
 export type UsernameChangeResult =
   | { status: "ok"; username: string }
@@ -57,6 +65,8 @@ export type UserProfileUpdates = Partial<
     | "streakLongest"
     | "unlockedPastryIds"
     | "username"
+    | "dailyGoalMinutes"
+    | "dailyGoalRewardedDate"
   >
 >;
 
@@ -96,6 +106,8 @@ export async function createUserProfileIfMissing(user: User) {
       streakLongest: 0,
       streakLastActiveDate: "",
       streakFreezes: 0,
+      dailyGoalMinutes: DEFAULT_DAILY_GOAL_MINUTES,
+      dailyGoalRewardedDate: "",
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -298,9 +310,23 @@ function normalizeUserProfile(
     usernameChangedAt: isTimestamp(value.usernameChangedAt)
       ? value.usernameChangedAt
       : null,
+    dailyGoalMinutes: clampDailyGoal(value.dailyGoalMinutes),
+    dailyGoalRewardedDate: normalizeStreakDate(value.dailyGoalRewardedDate),
     createdAt: isTimestamp(value.createdAt) ? value.createdAt : null,
     updatedAt: isTimestamp(value.updatedAt) ? value.updatedAt : null,
   };
+}
+
+function clampDailyGoal(value: unknown): number {
+  const minutes =
+    typeof value === "number" && Number.isFinite(value)
+      ? Math.floor(value)
+      : DEFAULT_DAILY_GOAL_MINUTES;
+
+  return Math.min(
+    MAX_DAILY_GOAL_MINUTES,
+    Math.max(MIN_DAILY_GOAL_MINUTES, minutes),
+  );
 }
 
 function clampNonNegativeInt(value: unknown): number {
@@ -390,6 +416,19 @@ function normalizeUserProfileUpdates(updates: UserProfileUpdates) {
     normalized.streakFreezes = Math.min(
       MAX_FREEZES,
       Math.max(0, Math.floor(updates.streakFreezes)),
+    );
+  }
+
+  if (
+    typeof updates.dailyGoalMinutes === "number" &&
+    Number.isFinite(updates.dailyGoalMinutes)
+  ) {
+    normalized.dailyGoalMinutes = clampDailyGoal(updates.dailyGoalMinutes);
+  }
+
+  if (typeof updates.dailyGoalRewardedDate === "string") {
+    normalized.dailyGoalRewardedDate = normalizeStreakDate(
+      updates.dailyGoalRewardedDate,
     );
   }
 

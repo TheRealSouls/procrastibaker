@@ -197,5 +197,7 @@ function normalizeAppUser(user: UserInput): User {
     streakLongest: 0,
     streakLastActiveDate: "",
     streakFreezes: 0,
+    dailyGoalMinutes: 60,
+    dailyGoalRewardedDate: "",
   };
 }

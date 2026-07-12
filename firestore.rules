@@ -44,6 +44,8 @@ service cloud.firestore {
           'streakLastActiveDate',
           'streakFreezes',
           'usernameChangedAt',
+          'dailyGoalMinutes',
+          'dailyGoalRewardedDate',
           'createdAt',
           'updatedAt'
         ])
@@ -67,6 +69,11 @@ service cloud.firestore {
         && isOptionalCount(data, 'streakFreezes')
         && isOptionalShortString(data, 'streakLastActiveDate')
         && isOptionalTimestamp(data, 'usernameChangedAt')
+        && (!('dailyGoalMinutes' in data)
+          || (data.dailyGoalMinutes is number
+            && data.dailyGoalMinutes >= 10
+            && data.dailyGoalMinutes <= 600))
+        && isOptionalShortString(data, 'dailyGoalRewardedDate')
         && isOptionalTimestamp(data, 'createdAt')
         && isOptionalTimestamp(data, 'updatedAt');
     }
