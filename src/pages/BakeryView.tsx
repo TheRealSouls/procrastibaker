@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { EmptyState } from "../components/EmptyState";
 import { PastryVisual } from "../components/PastryVisual";
 import { SessionCard } from "../components/SessionCard";
+import croissantIcon from "../media/sprites/icon.png";
 import type { AppState } from "../types";
 import { formatMinutes } from "../utils/sessionUtils";
 import { getPastryCounts } from "../utils/statsUtils";
@@ -33,7 +34,11 @@ export function BakeryView({ state }: BakeryViewProps) {
       </section>
 
       {state.completedSessions.length === 0 ? (
-        <EmptyState icon={"\u{1F950}"} title={t("bakery.emptyTitle")}>
+        <EmptyState
+          icon={"\u{1F950}"}
+          iconSrc={croissantIcon}
+          title={t("bakery.emptyTitle")}
+        >
           {t("bakery.emptyBody")}
         </EmptyState>
       ) : (

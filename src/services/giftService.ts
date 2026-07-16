@@ -24,20 +24,17 @@ export type Gift = {
   status: GiftStatus;
 };
 
-export type SendGiftResult = { status: "sent" | "not-friend" | "error" };
-
-// Cost to send a gift (paid by the sender) and the consolation coins a recipient
-// gets when the gifted pastry is one they already own.
-export const GIFT_COST_COINS = 30;
-export const GIFT_DUPLICATE_COINS = 15;
+export type SendGiftResult = {
+  status: "sent" | "not-friend" | "no-stock" | "error";
+};
 
 function clip(value: string, max: number): string {
   return value.trim().slice(0, max);
 }
 
-// Creates the gift doc. The sender's coin deduction is a separate write on their
-// own profile, batched alongside this by the AppContext handler so both land
-// together. Returns the new gift id, or null on failure.
+// Creates the gift doc. The sender's baked-stock decrement is a separate write on
+// their own profile, done alongside this by the AppContext handler. Returns the
+// new gift id, or null on failure.
 export async function createGift(
   fromUid: string,
   fromUsername: string,

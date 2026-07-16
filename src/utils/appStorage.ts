@@ -13,6 +13,7 @@ import type {
   StudyTag,
   User,
 } from "../types";
+import { normalizeGiftablePastries } from "./giftableInventory";
 
 const storageKey = "procrastibaker-app-state";
 const typoStorageKey = "procrastinbaker-app-state";
@@ -28,6 +29,7 @@ export function createDefaultAppState(): AppState {
     unlockedPastryIds: pastries
       .filter((pastry) => pastry.unlockedByDefault)
       .map((pastry) => pastry.id),
+    giftablePastries: {},
     tags: DEFAULT_TAGS,
     completedSessions: [],
     expiredSessions: [],
@@ -100,6 +102,7 @@ function normalizeAppState(value: unknown, fallback: AppState): AppState {
   return {
     user: isUser(value.user) ? normalizeUser(value.user) : fallback.user,
     unlockedPastryIds,
+    giftablePastries: normalizeGiftablePastries(value.giftablePastries),
     completedSessions: Array.isArray(value.completedSessions)
       ? normalizeStudySessions(value.completedSessions, tags)
       : fallback.completedSessions,

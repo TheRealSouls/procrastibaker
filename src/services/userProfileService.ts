@@ -13,6 +13,7 @@ import { pastries } from "../data/pastries";
 import type { AudioSettings, User } from "../types";
 import { loadAppState } from "../utils/appStorage";
 import { getOptionalFirestore } from "../utils/firebase";
+import { normalizeGiftablePastries } from "../utils/giftableInventory";
 import { MAX_FREEZES } from "../utils/streakUtils";
 
 export type UserProfile = {
@@ -22,6 +23,7 @@ export type UserProfile = {
   coins: number;
   selectedPastryId: string;
   unlockedPastryIds: string[];
+  giftablePastries: Record<string, number>;
   audioSettings: AudioSettings;
   localStorageMigrated: boolean;
   streakCount: number;
@@ -64,6 +66,7 @@ export type UserProfileUpdates = Partial<
     | "streakLastActiveDate"
     | "streakLongest"
     | "unlockedPastryIds"
+    | "giftablePastries"
     | "username"
     | "dailyGoalMinutes"
     | "dailyGoalRewardedDate"
@@ -100,6 +103,7 @@ export async function createUserProfileIfMissing(user: User) {
       selectedPastryId,
       unlockedPastryIds:
         unlockedPastryIds.length > 0 ? unlockedPastryIds : [selectedPastryId],
+      giftablePastries: {},
       audioSettings: normalizeAudioSettings(localState.audioSettings),
       localStorageMigrated: false,
       streakCount: 0,
@@ -301,6 +305,7 @@ function normalizeUserProfile(
     coins: Math.max(0, Math.floor(Number(value.coins) || 0)),
     selectedPastryId,
     unlockedPastryIds,
+    giftablePastries: normalizeGiftablePastries(value.giftablePastries),
     audioSettings: normalizeAudioSettings(value.audioSettings),
     localStorageMigrated: value.localStorageMigrated === true,
     streakCount: clampNonNegativeInt(value.streakCount),
@@ -379,6 +384,12 @@ function normalizeUserProfileUpdates(updates: UserProfileUpdates) {
     if (unlockedPastryIds.length > 0) {
       normalized.unlockedPastryIds = unlockedPastryIds;
     }
+  }
+
+  if (updates.giftablePastries !== undefined) {
+    normalized.giftablePastries = normalizeGiftablePastries(
+      updates.giftablePastries,
+    );
   }
 
   if (updates.audioSettings) {

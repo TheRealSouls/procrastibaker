@@ -77,6 +77,9 @@ export type AudioSettings = {
 export type AppState = {
   user: User | null;
   unlockedPastryIds: string[];
+  // Baked-pastry stock available to gift, keyed by pastryId. Earned one-per
+  // completed session, spent by gifting to friends.
+  giftablePastries: Record<string, number>;
   tags: StudyTag[];
   completedSessions: StudySession[];
   expiredSessions: StudySession[];

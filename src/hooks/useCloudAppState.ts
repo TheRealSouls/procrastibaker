@@ -433,6 +433,7 @@ function applyCloudProfileUpdates(
     coins: updates.coins ?? profile.coins,
     selectedPastryId: updates.selectedPastryId ?? profile.selectedPastryId,
     unlockedPastryIds: updates.unlockedPastryIds ?? profile.unlockedPastryIds,
+    giftablePastries: updates.giftablePastries ?? profile.giftablePastries,
     audioSettings: updates.audioSettings ?? profile.audioSettings,
     localStorageMigrated:
       updates.localStorageMigrated ?? profile.localStorageMigrated,
@@ -472,6 +473,7 @@ function buildCloudAppState(
       dailyGoalRewardedDate: profile.dailyGoalRewardedDate,
     },
     unlockedPastryIds: profile.unlockedPastryIds,
+    giftablePastries: profile.giftablePastries,
     tags: tags.length > 0 ? tags.map(stripSyncedTag) : DEFAULT_TAGS,
     completedSessions: sessions
       .filter((session) => session.completed)

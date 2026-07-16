@@ -37,6 +37,7 @@ service cloud.firestore {
           'coins',
           'selectedPastryId',
           'unlockedPastryIds',
+          'giftablePastries',
           'audioSettings',
           'localStorageMigrated',
           'streakCount',
@@ -62,6 +63,9 @@ service cloud.firestore {
         && data.unlockedPastryIds is list
         && data.unlockedPastryIds.size() > 0
         && data.unlockedPastryIds.size() <= 32
+        && (!('giftablePastries' in data)
+          || (data.giftablePastries is map
+            && data.giftablePastries.size() <= 32))
         && isAudioSettings(data.audioSettings)
         && data.localStorageMigrated is bool
         && isOptionalCount(data, 'streakCount')

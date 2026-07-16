@@ -35,11 +35,10 @@ import { upsertLeaderboardStats } from "../services/friendService";
 import {
   createGift,
   markGiftClaimed,
-  GIFT_COST_COINS,
-  GIFT_DUPLICATE_COINS,
   type Gift,
   type SendGiftResult,
 } from "../services/giftService";
+import { addGiftable, takeGiftable } from "../utils/giftableInventory";
 import { initPushNotifications } from "../services/pushNotifications";
 import { DAILY_GOAL_REWARD_COINS } from "../services/userProfileService";
 import {
@@ -340,27 +339,29 @@ export function AppProvider() {
     trackEvent("pastry_purchased", { pastryId: pastry.id, price: pastry.price });
   }
 
-  // Gift a pastry from your collection to a confirmed friend. The gift doc is
-  // created first, and only if that succeeds are the sender's coins deducted —
-  // so the one non-atomic failure mode (create ok, deduct fails) just means a
-  // free gift, never a charge with nothing sent.
+  // Gift a pastry you baked (earned from a focus session) to a confirmed friend.
+  // Consumes one unit of that pastry from your giftable stock — no coins. The
+  // stock is decremented first, and only then is the gift doc created; if the
+  // create fails the stock is restored so you never lose a bake for nothing.
   async function handleSendGift(
     toUid: string,
     toUsername: string,
     pastryId: string,
   ): Promise<SendGiftResult> {
     const user = appState.user;
-    const coins = user ? Math.max(0, Math.floor(user.coins)) : 0;
 
-    if (
-      !user ||
-      !user.uid ||
-      !toUid.trim() ||
-      !appState.unlockedPastryIds.includes(pastryId) ||
-      coins < GIFT_COST_COINS
-    ) {
+    if (!user || !user.uid || !toUid.trim()) {
       return { status: "error" };
     }
+
+    const remaining = takeGiftable(appState.giftablePastries, pastryId);
+
+    if (!remaining) {
+      return { status: "no-stock" };
+    }
+
+    // Spend the bake up front (optimistic), then send.
+    await updateUserProfile({ giftablePastries: remaining });
 
     const giftId = await createGift(
       user.uid,
@@ -371,16 +372,20 @@ export function AppProvider() {
     );
 
     if (!giftId) {
+      // Refund the bake — the send didn't go through.
+      void updateUserProfile({
+        giftablePastries: addGiftable(remaining, pastryId),
+      });
       return { status: "not-friend" };
     }
 
-    void updateUserProfile({ coins: coins - GIFT_COST_COINS });
-    trackEvent("gift_sent", { pastryId, cost: GIFT_COST_COINS });
+    trackEvent("gift_sent", { pastryId });
     return { status: "sent" };
   }
 
-  // Claim an incoming gift: unlock the pastry if it's new, otherwise take a small
-  // coin consolation. The profile onSnapshot folds the change back into appState.
+  // Claim an incoming gift: unlock the pastry type if it's new to you, and add the
+  // baked pastry to your own giftable stock (you now hold it, and can re-gift it).
+  // The profile onSnapshot folds the change back into appState.
   async function handleClaimGift(gift: Gift): Promise<void> {
     const user = appState.user;
 
@@ -388,12 +393,14 @@ export function AppProvider() {
       return;
     }
 
+    const nextGiftable = addGiftable(appState.giftablePastries, gift.pastryId);
+
     if (appState.unlockedPastryIds.includes(gift.pastryId)) {
-      const coins = Math.max(0, Math.floor(user.coins));
-      void updateUserProfile({ coins: coins + GIFT_DUPLICATE_COINS });
+      void updateUserProfile({ giftablePastries: nextGiftable });
     } else {
       void updateUserProfile({
         unlockedPastryIds: [...appState.unlockedPastryIds, gift.pastryId],
+        giftablePastries: nextGiftable,
       });
     }
 
@@ -507,6 +514,11 @@ export function AppProvider() {
       });
 
       if (saved) {
+        // Bank the freshly baked pastry so it can be gifted to a friend later.
+        await updateUserProfile({
+          giftablePastries: addGiftable(appState.giftablePastries, pastry.id),
+        });
+
         // Award the once-per-day goal bonus if this session crosses the target.
         // Fold it into the single coin update so we don't double-read stale coins.
         const user = appState.user;

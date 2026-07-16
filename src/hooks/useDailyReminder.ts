@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import croissantIcon from "../media/sprites/icon.png";
 import {
   loadReminderPrefs,
   getReminderLastFired,
@@ -62,7 +63,8 @@ export function useDailyReminder(goalMet: boolean) {
       setReminderLastFired(today);
       try {
         const notification = new Notification("Procrastibaker", {
-          body: "You haven't hit today's focus goal yet — time for a quick bake? 🥐",
+          body: "You haven't hit today's focus goal yet — time for a quick bake?",
+          icon: croissantIcon,
         });
         notification.onclick = () => {
           window.focus();

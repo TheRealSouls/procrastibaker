@@ -205,20 +205,19 @@
   "gifts": {
     "sendButton": "Send pastry",
     "pickHeading": "Send a pastry to {{name}}",
-    "pickIntro": "Pick one from your collection to gift.",
-    "cost": "Costs {{coins}} coins",
-    "confirm": "Send gift",
+    "pickIntro": "Pick one of the pastries you've baked to send. You earn a pastry each time you finish a focus session.",
+    "noneBaked": "You haven't baked any pastries yet — finish a focus session to earn one to gift.",
     "sending": "Sending...",
-    "notEnough": "You need {{coins}} coins to send a gift.",
     "msgSent": "Gift sent! 🎁",
     "msgNotFriend": "Couldn't send — you can only gift confirmed friends.",
+    "msgNoStock": "You've run out of that pastry — bake more to keep gifting.",
     "msgError": "Something went wrong. Please try again.",
     "inboxHeading": "Your gifts",
     "received": "{{from}} sent you a {{pastry}} 🎁",
     "claim": "Claim",
     "claiming": "Claiming...",
-    "unlocked": "Unlocked {{pastry}}!",
-    "gotCoins": "You already had it — +{{coins}} coins instead."
+    "unlocked": "Unlocked {{pastry}} — added to your bakery!",
+    "gotStock": "Added a {{pastry}} to your bakery!"
   },
   "verify": {
     "title": "Verify your email",

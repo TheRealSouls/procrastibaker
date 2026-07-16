@@ -5,8 +5,8 @@ import { useFriends, type Friend } from "../hooks/useFriends";
 import { useGifts } from "../hooks/useGifts";
 import { pastries } from "../data/pastries";
 import { pastrySprites } from "../data/pastrySprites";
-import { GIFT_COST_COINS, GIFT_DUPLICATE_COINS } from "../services/giftService";
 import type { Gift } from "../services/giftService";
+import { giftableCount } from "../utils/giftableInventory";
 import { formatMinutes } from "../utils/sessionUtils";
 import {
   totalFocusMinutes,
@@ -36,6 +36,7 @@ const RESULT_KEYS = {
 const GIFT_RESULT_KEYS = {
   sent: "gifts.msgSent",
   "not-friend": "gifts.msgNotFriend",
+  "no-stock": "gifts.msgNoStock",
   error: "gifts.msgError",
 } as const;
 
@@ -61,8 +62,14 @@ export function FriendsView() {
   const [claimBusyId, setClaimBusyId] = useState("");
   const [claimNotice, setClaimNotice] = useState("");
 
-  const coins = user ? Math.max(0, Math.floor(user.coins)) : 0;
-  const canAffordGift = coins >= GIFT_COST_COINS;
+  // Pastry types you have baked stock of, most-stocked first.
+  const giftableList = useMemo(
+    () =>
+      Object.entries(appState.giftablePastries)
+        .filter(([, count]) => count > 0)
+        .sort((a, b) => b[1] - a[1]),
+    [appState.giftablePastries],
+  );
 
   const currentWeek = weekKey();
 
@@ -141,14 +148,14 @@ export function FriendsView() {
       return;
     }
 
-    const isDuplicate = appState.unlockedPastryIds.includes(gift.pastryId);
+    const alreadyOwned = appState.unlockedPastryIds.includes(gift.pastryId);
     setClaimBusyId(gift.id);
 
     try {
       await handleClaimGift(gift);
       setClaimNotice(
-        isDuplicate
-          ? t("gifts.gotCoins", { coins: GIFT_DUPLICATE_COINS })
+        alreadyOwned
+          ? t("gifts.gotStock", { pastry: pastryName(gift.pastryId) })
           : t("gifts.unlocked", { pastry: pastryName(gift.pastryId) }),
       );
     } finally {
@@ -359,29 +366,28 @@ export function FriendsView() {
               {t("gifts.pickHeading", { name: giftTarget.username })}
             </h2>
             <p className="field-hint">{t("gifts.pickIntro")}</p>
-            <p className="gift-picker__cost">
-              {t("gifts.cost", { coins: GIFT_COST_COINS })}
-            </p>
-            {!canAffordGift && (
+            {giftableList.length === 0 ? (
               <p className="auth-error" role="status">
-                {t("gifts.notEnough", { coins: GIFT_COST_COINS })}
+                {t("gifts.noneBaked")}
               </p>
+            ) : (
+              <ul className="gift-picker__grid">
+                {giftableList.map(([id, count]) => (
+                  <li key={id}>
+                    <button
+                      className="gift-picker__pastry"
+                      disabled={giftBusy || giftableCount(appState.giftablePastries, id) <= 0}
+                      onClick={() => void handlePickGift(id)}
+                      type="button"
+                    >
+                      <img alt="" aria-hidden="true" src={pastrySprites[id]} />
+                      <span>{pastryName(id)}</span>
+                      <span className="gift-picker__count">×{count}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
-            <ul className="gift-picker__grid">
-              {appState.unlockedPastryIds.map((id) => (
-                <li key={id}>
-                  <button
-                    className="gift-picker__pastry"
-                    disabled={!canAffordGift || giftBusy}
-                    onClick={() => void handlePickGift(id)}
-                    type="button"
-                  >
-                    <img alt="" aria-hidden="true" src={pastrySprites[id]} />
-                    <span>{pastryName(id)}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
             <button
               className="button"
               disabled={giftBusy}
