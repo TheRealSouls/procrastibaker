@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import croissantIcon from "../media/sprites/icon.png";
 import { validatePassword } from "../utils/validation";
 
 type AuthMode = "signin" | "signup";
@@ -68,7 +69,12 @@ export function LoginView({
       </Link>
       <div className="page-intro">
         <span className="intro-icon" aria-hidden="true">
-          &#129360;
+          <img
+            alt=""
+            className="intro-icon__img"
+            draggable={false}
+            src={croissantIcon}
+          />
         </span>
         <h1>{t("login.title")}</h1>
         <p>{t("login.intro")}</p>

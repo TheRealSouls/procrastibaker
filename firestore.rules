@@ -239,7 +239,14 @@ service cloud.firestore {
     // party can read/delete; only the sender creates a pending request; only the
     // recipient may flip it to accepted (and nothing else).
     match /friendRequests/{id} {
-      allow read: if request.auth != null
+      // The doc id is "<from>__<to>", so a party can be authorised from the id
+      // alone — this also allows a clean "not found" on a missing doc instead of
+      // a permission error (resource.data is null when the doc doesn't exist).
+      allow get: if request.auth != null
+        && request.auth.uid in id.split('__');
+      // Listing is allowed only for queries constrained to the caller (the
+      // client filters by fromUid == me or toUid == me).
+      allow list: if request.auth != null
         && (resource.data.fromUid == request.auth.uid
           || resource.data.toUid == request.auth.uid);
       allow create: if request.auth != null

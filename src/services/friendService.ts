@@ -9,6 +9,9 @@ import {
   setDoc,
   updateDoc,
   where,
+  type DocumentData,
+  type DocumentReference,
+  type DocumentSnapshot,
   type Unsubscribe,
 } from "firebase/firestore";
 import { getOptionalFirestore } from "../utils/firebase";
@@ -46,6 +49,20 @@ function requestId(fromUid: string, toUid: string): string {
 
 function clip(value: string, max: number): string {
   return value.trim().slice(0, max);
+}
+
+// Reading a *non-existent* friendRequests doc is denied by the security rules
+// (they dereference resource.data, which is null when the doc is missing), so
+// getDoc throws permission-denied. Treat any read failure as "not there" — the
+// caller only needs to know whether an existing relationship is present.
+async function tryGetDoc(
+  ref: DocumentReference<DocumentData>,
+): Promise<DocumentSnapshot<DocumentData> | null> {
+  try {
+    return await getDoc(ref);
+  } catch {
+    return null;
+  }
 }
 
 // Best-effort: register the user's current username in the shared `usernames`
@@ -117,9 +134,9 @@ export async function sendFriendRequest(
   try {
     // They already sent us one → accept it instead of creating a duplicate.
     const reverseRef = doc(firestore, "friendRequests", requestId(targetUid, fromUid));
-    const reverse = await getDoc(reverseRef);
+    const reverse = await tryGetDoc(reverseRef);
 
-    if (reverse.exists()) {
+    if (reverse && reverse.exists()) {
       if (reverse.data().status === "accepted") {
         return { status: "already" };
       }
@@ -128,9 +145,9 @@ export async function sendFriendRequest(
     }
 
     const forwardRef = doc(firestore, "friendRequests", requestId(fromUid, targetUid));
-    const forward = await getDoc(forwardRef);
+    const forward = await tryGetDoc(forwardRef);
 
-    if (forward.exists()) {
+    if (forward && forward.exists()) {
       return { status: forward.data().status === "accepted" ? "already" : "pending" };
     }
 

@@ -401,28 +401,11 @@ export function LofiPlayerProvider({ children }: { children: ReactNode }) {
     readyRef.current = true;
     setAvailable(true);
 
-    let removeGesture: (() => void) | null = null;
-    const armAutostart = () => {
-      if (removeGesture || readStored(LS_PLAYING) !== "true") {
-        return;
-      }
-      const onFirstGesture = () => {
-        removeGesture?.();
-        removeGesture = null;
-        startPlayback();
-      };
-      window.addEventListener("pointerdown", onFirstGesture, { once: true });
-      window.addEventListener("keydown", onFirstGesture, { once: true });
-      removeGesture = () => {
-        window.removeEventListener("pointerdown", onFirstGesture);
-        window.removeEventListener("keydown", onFirstGesture);
-      };
-    };
-
-    // Loop packs can load + autostart right away; lo-fi waits for the playlist.
+    // Preload the current pack into the active deck (paused, volume 0) so pressing
+    // play is instant. Playback NEVER starts on its own — only an explicit play
+    // press begins audio, so a stray click never triggers music.
     if (findPack(packRef.current).kind === "loop") {
       loadPackIntoDeck(decksRef.current[activeRef.current], packRef.current);
-      armAutostart();
     }
 
     fetch(PLAYLIST_URL, { cache: "no-cache" })
@@ -436,7 +419,6 @@ export function LofiPlayerProvider({ children }: { children: ReactNode }) {
           : [];
         if (packRef.current === "lofi" && tracksRef.current.length > 0) {
           loadPackIntoDeck(decksRef.current[activeRef.current], "lofi");
-          armAutostart();
         }
       })
       .catch(() => {});
@@ -444,7 +426,6 @@ export function LofiPlayerProvider({ children }: { children: ReactNode }) {
     return () => {
       disposed = true;
       cancelAnimationFrame(fadeRafRef.current);
-      removeGesture?.();
       for (const deck of [deckA, deckB]) {
         deck.removeEventListener("timeupdate", onTimeUpdate);
         deck.removeEventListener("ended", onEnded);
