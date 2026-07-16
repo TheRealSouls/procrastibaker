@@ -1705,6 +1705,18 @@ label,
 .oven__pastry img {
   width: 100%;
   height: 100%;
+  /* Progressive baking: interpolate a warm "doneness" look with --doneness
+     (0 = raw/pale, 1 = fully baked). Defaults to 1 so every other pastry sprite
+     in the app is unaffected. */
+  filter:
+    brightness(calc(1 + (1 - var(--doneness, 1)) * 0.22))
+    saturate(calc(0.5 + var(--doneness, 1) * 0.55))
+    contrast(calc(0.9 + var(--doneness, 1) * 0.13))
+    drop-shadow(0 0 calc(var(--doneness, 1) * 10px) rgba(214, 120, 40, 0.45));
+  transform: scale(calc(0.92 + var(--doneness, 1) * 0.08));
+  transition:
+    filter 0.6s ease,
+    transform 0.6s ease;
 }
 
 .oven__status {
@@ -1788,6 +1800,16 @@ label,
 
 .oven--active .oven__pastry {
   animation: pastry-bob 2s ease-in-out infinite;
+}
+
+/* The oven's internal warmth deepens as the bake progresses. */
+.oven--active .oven__glow {
+  background: rgba(255, 240, 205, calc(0.14 + var(--doneness, 1) * 0.22));
+  box-shadow: inset 0 0 calc(14px + var(--doneness, 1) * 16px)
+    rgba(255, 236, 196, calc(0.2 + var(--doneness, 1) * 0.3));
+  transition:
+    background 0.6s ease,
+    box-shadow 0.6s ease;
 }
 
 .oven--paused .oven__body {
@@ -4145,6 +4167,11 @@ button:disabled,
   .oven--completed .oven__pastry {
     animation: none !important;
     transform: none !important;
+  }
+
+  .oven__pastry img,
+  .oven--active .oven__glow {
+    transition: none !important;
   }
 
   .oven__heat-wave,

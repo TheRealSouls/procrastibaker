@@ -23,3 +23,7 @@ Thumbs.db
 
 # Local Claude Code config
 .claude/
+
+# JVM crash dumps (Android/Gradle OOM)
+hs_err_pid*.log
+replay_pid*.log
