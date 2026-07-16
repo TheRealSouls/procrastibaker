@@ -32,6 +32,7 @@ import {
 } from "../utils/authService";
 import { missingFirebaseConfigMessage } from "../utils/firebase";
 import { upsertLeaderboardStats } from "../services/friendService";
+import { initPushNotifications } from "../services/pushNotifications";
 import { DAILY_GOAL_REWARD_COINS } from "../services/userProfileService";
 import {
   focusMinutesOnDate,
@@ -137,6 +138,14 @@ export function AppProvider() {
       identifyUser({ uid: userUid, authProvider: userAuthProvider });
     }
   }, [userUid, userAuthProvider]);
+
+  // Register for native push once signed in (no-op on web) so a backend can
+  // deliver reminders even when the app is closed.
+  useEffect(() => {
+    if (userUid) {
+      void initPushNotifications(userUid);
+    }
+  }, [userUid]);
 
   // Page views are now real routes — track each distinct path.
   useEffect(() => {

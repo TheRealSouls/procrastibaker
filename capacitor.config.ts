@@ -15,6 +15,13 @@ const config: CapacitorConfig = {
       backgroundColor: "#fff7df",
       showSpinner: false,
     },
+    FirebaseAuthentication: {
+      // The native plugin only performs the Google sign-in and hands back a
+      // credential; the JS SDK (which Firestore uses) is the actual session, so
+      // we skip the plugin's own native Firebase sign-in.
+      skipNativeAuth: true,
+      providers: ["google.com"],
+    },
   },
   // For live-reload against the dev server on a device/emulator, run
   // `npm run dev -- --host` and temporarily add here (do NOT commit):

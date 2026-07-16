@@ -277,6 +277,20 @@ service cloud.firestore {
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
+    // FCM device tokens, keyed by uid. Owner-only; a backend reads these with the
+    // Admin SDK (which bypasses rules) to send pushes.
+    match /pushTokens/{uid} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['token', 'platform', 'updatedAt'])
+        && request.resource.data.token is string
+        && request.resource.data.token.size() > 0
+        && request.resource.data.token.size() <= 4096
+        && request.resource.data.platform is string
+        && request.resource.data.platform.size() <= 16
+        && isOptionalTimestamp(request.resource.data, 'updatedAt');
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

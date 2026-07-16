@@ -2,10 +2,12 @@ import {
   createUserWithEmailAndPassword,
   deleteUser,
   EmailAuthProvider,
+  GoogleAuthProvider,
   reauthenticateWithCredential,
   reauthenticateWithPopup,
   sendEmailVerification,
   sendPasswordResetEmail,
+  signInWithCredential,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut as firebaseSignOut,
@@ -13,6 +15,7 @@ import {
 } from "firebase/auth";
 import type { User } from "../types";
 import { loadAppState } from "./appStorage";
+import { isNativeApp } from "./capacitor";
 import {
   getFirebaseAuth,
   getOptionalFirebaseAuth,
@@ -26,8 +29,29 @@ export function getCurrentFirebaseUser() {
   return getOptionalFirebaseAuth()?.currentUser ?? null;
 }
 
-/** Signs in with Google (popup). Procrastibaker requires a real account. */
+/**
+ * Signs in with Google. On the web this is a popup; inside the native shell the
+ * WebView popup flow is unavailable, so we use the native Google sign-in plugin
+ * and exchange its ID token for a Firebase credential on the JS SDK (which is the
+ * session Firestore uses).
+ */
 export async function loginWithGoogle(): Promise<User> {
+  if (isNativeApp()) {
+    const { FirebaseAuthentication } = await import(
+      "@capacitor-firebase/authentication"
+    );
+    const result = await FirebaseAuthentication.signInWithGoogle();
+    const idToken = result.credential?.idToken;
+
+    if (!idToken) {
+      throw new Error("Google sign-in did not return a credential.");
+    }
+
+    const credential = GoogleAuthProvider.credential(idToken);
+    const { user } = await signInWithCredential(getFirebaseAuth(), credential);
+    return mapFirebaseUserToAppUser(user);
+  }
+
   const result = await signInWithPopup(getFirebaseAuth(), googleProvider);
   return mapFirebaseUserToAppUser(result.user);
 }
@@ -100,6 +124,19 @@ export async function sendPasswordReset(email: string): Promise<void> {
 }
 
 export async function logout() {
+  // Also clear the native Google session so the next sign-in shows the account
+  // picker rather than silently reusing the last account.
+  if (isNativeApp()) {
+    try {
+      const { FirebaseAuthentication } = await import(
+        "@capacitor-firebase/authentication"
+      );
+      await FirebaseAuthentication.signOut();
+    } catch {
+      // Native plugin unavailable — ignore.
+    }
+  }
+
   const auth = getOptionalFirebaseAuth();
 
   if (auth?.currentUser) {

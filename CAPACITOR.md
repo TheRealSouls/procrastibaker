@@ -54,25 +54,46 @@ Add to `capacitor.config.ts`, then `npx cap sync android`:
 server: { url: "http://192.168.1.20:5188", cleartext: true }
 ```
 
-## Known follow-ups (important)
-These are expected for a first shell — the web build is unaffected:
+## Native Firebase setup (auth + App Check + push)
+Native Google sign-in, Play Integrity App Check, and FCM push are **wired in code**
+(all guarded by `isNativeApp()`, so the web build is unaffected). They need this
+one-time Firebase/Android config to work on a device:
 
-1. **Google sign-in** uses `signInWithPopup`, which does **not** work in a native
-   WebView. Email/password sign-in, Firestore, streaks, friends, etc. all work.
-   To enable native Google auth, add
-   [`@capacitor-firebase/authentication`](https://github.com/capawesome-team/capacitor-firebase)
-   and branch on `isNativeApp()` in `src/utils/authService.ts`.
-2. **App Check (reCAPTCHA v3)** is browser-oriented. On Android, switch to the
-   Play Integrity provider and register the app's SHA-256 + `capacitor://localhost`
-   / `https://localhost` under Firebase App Check, or App Check-gated calls may be
-   rejected on device.
-3. **Firebase authorized domains** — add `localhost` (and your custom scheme) under
-   Auth → Settings → Authorized domains for auth flows to resolve on device.
-4. **App icons / splash** — replace the placeholder assets in
-   `android/app/src/main/res/` (e.g. via `@capacitor/assets`).
-5. **Reminders** — the in-app daily reminder only fires while a tab/app is open.
-   Native background push needs `@capacitor/push-notifications` + FCM and a send
-   trigger; this shell is the right place to add it.
+1. **Register the Android app** in Firebase Console → Project settings → *Your apps*
+   → Add app → Android, package name **`com.procrastibaker.app`**. Download
+   **`google-services.json`** into **`android/app/google-services.json`** (the Gradle
+   plugin auto-applies when the file is present — see `android/app/build.gradle`).
+2. **SHA fingerprints** — add your debug + release signing **SHA-1 and SHA-256** to
+   that Android app (Project settings → your app). Get the debug one with:
+   ```bash
+   cd android && ./gradlew signingReport
+   ```
+   Required for both Google sign-in and Play Integrity.
+3. **Google sign-in** — Auth → Sign-in method → enable **Google**. The native plugin
+   (`@capacitor-firebase/authentication`, configured in `capacitor.config.ts` with
+   `skipNativeAuth: true`) returns an ID token that
+   [`src/utils/authService.ts`](src/utils/authService.ts) exchanges via
+   `signInWithCredential` on the JS SDK.
+4. **App Check → Play Integrity** — App Check → Apps → register the Android app with
+   the **Play Integrity** provider. On device,
+   [`src/utils/firebase.ts`](src/utils/firebase.ts) initialises
+   `@capacitor-firebase/app-check` and bridges its token to the JS SDK via a
+   `CustomProvider` (web still uses reCAPTCHA v3).
+5. **Cloud Messaging (push)** — Cloud Messaging is enabled with the project. On sign-in
+   the app registers and stores the device token at **`pushTokens/{uid}`**
+   (`src/services/pushNotifications.ts`). **Sending** still needs a backend: a Cloud
+   Function (scheduled, for the daily reminder) or server that reads `pushTokens` with
+   the Admin SDK and calls FCM. Deploy the updated **`firestore.rules`** (adds the
+   `pushTokens` collection).
+6. **Authorized domains** — Auth → Settings → Authorized domains: add `localhost`.
+
+After changing any native config: `npx cap sync android`, then rebuild in Android Studio.
+
+## Remaining polish
+- **App icons / splash** — replace the placeholder assets in
+  `android/app/src/main/res/` (e.g. via `@capacitor/assets`).
+- The in-app daily reminder (`useDailyReminder`) still runs in-app; wire the Cloud
+  Function above to deliver it as real push when the app is closed.
 
 ## iOS
 Not added yet. Once on a Mac with Xcode: `npm i @capacitor/ios && npx cap add ios`.

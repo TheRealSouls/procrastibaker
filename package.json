@@ -8,9 +8,12 @@
     "cap:android": "npm run build && cap sync android && cap open android"
   },
   "dependencies": {
+    "@capacitor-firebase/app-check": "^8.3.0",
+    "@capacitor-firebase/authentication": "^8.3.0",
     "@capacitor/android": "^8.4.1",
     "@capacitor/app": "^8.1.0",
     "@capacitor/core": "^8.4.1",
+    "@capacitor/push-notifications": "^8.1.2",
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.2",
     "@sentry/react": "^10.59.0",

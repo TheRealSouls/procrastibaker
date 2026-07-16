@@ -6,6 +6,7 @@ import {
   type FirebaseOptions,
 } from "firebase/app";
 import {
+  CustomProvider,
   initializeAppCheck,
   ReCaptchaV3Provider,
 } from "firebase/app-check";
@@ -17,6 +18,7 @@ import {
   persistentMultipleTabManager,
   type Firestore,
 } from "firebase/firestore";
+import { isNativeApp } from "./capacitor";
 
 // Public App Check (reCAPTCHA v3) site key. Safe to ship. The matching SECRET is
 // registered in the Firebase App Check console only — never in the client.
@@ -100,23 +102,53 @@ function createFirestore(firebaseApp: FirebaseApp): Firestore {
   }
 }
 
-if (app && typeof window !== "undefined") {
-  // In dev, App Check prints a debug token to the console to register under
-  // Firebase Console -> App Check -> Manage debug tokens (otherwise localhost is
-  // blocked once enforcement is on).
-  if (import.meta.env.DEV) {
-    (
-      self as unknown as { FIREBASE_APPCHECK_DEBUG_TOKEN?: boolean | string }
-    ).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-  }
-
+// Bridges native Play Integrity App Check tokens (from the Capacitor plugin) into
+// the JS SDK via a CustomProvider, so Firestore calls from the WebView are
+// attested. Web uses reCAPTCHA v3 instead (below).
+async function initNativeAppCheck(firebaseApp: FirebaseApp) {
   try {
-    initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(recaptchaV3SiteKey),
+    const { FirebaseAppCheck } = await import("@capacitor-firebase/app-check");
+    await FirebaseAppCheck.initialize({ isTokenAutoRefreshEnabled: true });
+
+    initializeAppCheck(firebaseApp, {
+      provider: new CustomProvider({
+        getToken: async () => {
+          const { token, expireTimeMillis } = await FirebaseAppCheck.getToken();
+          return {
+            token,
+            // Fall back to a 1h TTL if the platform doesn't report expiry.
+            expireTimeMillis: expireTimeMillis ?? Date.now() + 60 * 60 * 1000,
+          };
+        },
+      }),
       isTokenAutoRefreshEnabled: true,
     });
   } catch (error) {
-    console.error("App Check initialization failed", error);
+    console.error("Native App Check initialization failed", error);
+  }
+}
+
+if (app && typeof window !== "undefined") {
+  if (isNativeApp()) {
+    void initNativeAppCheck(app);
+  } else {
+    // In dev, App Check prints a debug token to the console to register under
+    // Firebase Console -> App Check -> Manage debug tokens (otherwise localhost is
+    // blocked once enforcement is on).
+    if (import.meta.env.DEV) {
+      (
+        self as unknown as { FIREBASE_APPCHECK_DEBUG_TOKEN?: boolean | string }
+      ).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+    }
+
+    try {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(recaptchaV3SiteKey),
+        isTokenAutoRefreshEnabled: true,
+      });
+    } catch (error) {
+      console.error("App Check initialization failed", error);
+    }
   }
 }
 
