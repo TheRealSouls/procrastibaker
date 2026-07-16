@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useApp } from "../context/AppContext";
@@ -7,9 +7,11 @@ import {
   isAnalyticsOptedOut,
   setAnalyticsOptedOut,
 } from "../services/analytics";
+import { saveReminderSettings } from "../services/reminderSyncService";
 import {
   loadReminderPrefs,
   saveReminderPrefs,
+  type ReminderPrefs,
 } from "../utils/reminderStorage";
 
 type Busy = "idle" | "exporting" | "deleting";
@@ -269,6 +271,8 @@ export function AccountView() {
 
 function ReminderSettings() {
   const { t } = useTranslation();
+  const { appState } = useApp();
+  const uid = appState.user?.uid;
   const supported =
     typeof window !== "undefined" && "Notification" in window;
   const [permission, setPermission] = useState<NotificationPermission | null>(
@@ -277,28 +281,41 @@ function ReminderSettings() {
   const [prefs, setPrefs] = useState(loadReminderPrefs);
   const blocked = supported && permission === "denied";
 
+  // Backfill the server copy (and refresh the timezone offset) once we know the
+  // user, so the scheduled push function has current settings even if the user
+  // last changed them before this feature — or from another device.
+  useEffect(() => {
+    if (uid) {
+      void saveReminderSettings(uid, prefs);
+    }
+    // Only on uid change — later edits sync through the handlers below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid]);
+
+  function persist(next: ReminderPrefs) {
+    setPrefs(next);
+    saveReminderPrefs(next);
+    if (uid) {
+      void saveReminderSettings(uid, next);
+    }
+  }
+
   async function handleToggle(enabled: boolean) {
     if (enabled && supported && permission !== "granted") {
       const result = await Notification.requestPermission();
       setPermission(result);
 
       if (result !== "granted") {
-        const next = { ...prefs, enabled: false };
-        setPrefs(next);
-        saveReminderPrefs(next);
+        persist({ ...prefs, enabled: false });
         return;
       }
     }
 
-    const next = { ...prefs, enabled };
-    setPrefs(next);
-    saveReminderPrefs(next);
+    persist({ ...prefs, enabled });
   }
 
   function handleTime(time: string) {
-    const next = { ...prefs, time };
-    setPrefs(next);
-    saveReminderPrefs(next);
+    persist({ ...prefs, time });
   }
 
   return (

@@ -81,10 +81,12 @@ one-time Firebase/Android config to work on a device:
    `CustomProvider` (web still uses reCAPTCHA v3).
 5. **Cloud Messaging (push)** — Cloud Messaging is enabled with the project. On sign-in
    the app registers and stores the device token at **`pushTokens/{uid}`**
-   (`src/services/pushNotifications.ts`). **Sending** still needs a backend: a Cloud
-   Function (scheduled, for the daily reminder) or server that reads `pushTokens` with
-   the Admin SDK and calls FCM. Deploy the updated **`firestore.rules`** (adds the
-   `pushTokens` collection).
+   (`src/services/pushNotifications.ts`). **Sending is implemented** in the
+   [`functions/`](functions) Cloud Functions project (see [its README](functions/README.md)):
+   `onGiftCreated` pushes the recipient when a gift is sent, and `sendDailyReminders`
+   (scheduled) pushes users who haven't met their daily goal at their chosen time. Deploy
+   with `firebase deploy --only functions` (and the updated **`firestore.rules`**, which
+   add `pushTokens` and `reminderSettings`).
 6. **Authorized domains** — Auth → Settings → Authorized domains: add `localhost`.
 
 After changing any native config: `npx cap sync android`, then rebuild in Android Studio.
@@ -92,8 +94,10 @@ After changing any native config: `npx cap sync android`, then rebuild in Androi
 ## Remaining polish
 - **App icons / splash** — replace the placeholder assets in
   `android/app/src/main/res/` (e.g. via `@capacitor/assets`).
-- The in-app daily reminder (`useDailyReminder`) still runs in-app; wire the Cloud
-  Function above to deliver it as real push when the app is closed.
+- The in-app daily reminder (`useDailyReminder`) still fires a local browser
+  notification on web; the `sendDailyReminders` Cloud Function delivers the same nudge
+  as a real push to the native app when it's closed (settings are mirrored to
+  `reminderSettings/{uid}`).
 
 ## iOS
 Not added yet. Once on a Mac with Xcode: `npm i @capacitor/ios && npx cap add ios`.

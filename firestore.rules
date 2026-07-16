@@ -308,6 +308,27 @@ service cloud.firestore {
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
+    // Daily-reminder settings mirrored from the client, keyed by uid, so the
+    // scheduled Cloud Function can deliver reminders as push. Owner reads/writes
+    // enabled/time/timezone; the function manages `lastPushedDate` via the Admin
+    // SDK (which bypasses rules), so it stays optional and read-only to clients
+    // that don't send it.
+    match /reminderSettings/{uid} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly([
+          'enabled', 'time', 'tzOffsetMinutes', 'lastPushedDate', 'updatedAt'
+        ])
+        && request.resource.data.enabled is bool
+        && request.resource.data.time is string
+        && request.resource.data.time.size() <= 5
+        && request.resource.data.tzOffsetMinutes is number
+        && request.resource.data.tzOffsetMinutes >= -840
+        && request.resource.data.tzOffsetMinutes <= 840
+        && isOptionalShortString(request.resource.data, 'lastPushedDate')
+        && isOptionalTimestamp(request.resource.data, 'updatedAt');
+    }
+
     // FCM device tokens, keyed by uid. Owner-only; a backend reads these with the
     // Admin SDK (which bypasses rules) to send pushes.
     match /pushTokens/{uid} {
