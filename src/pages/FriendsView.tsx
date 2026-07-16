@@ -1,7 +1,12 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useApp } from "../context/AppContext";
-import { useFriends } from "../hooks/useFriends";
+import { useFriends, type Friend } from "../hooks/useFriends";
+import { useGifts } from "../hooks/useGifts";
+import { pastries } from "../data/pastries";
+import { pastrySprites } from "../data/pastrySprites";
+import { GIFT_COST_COINS, GIFT_DUPLICATE_COINS } from "../services/giftService";
+import type { Gift } from "../services/giftService";
 import { formatMinutes } from "../utils/sessionUtils";
 import {
   totalFocusMinutes,
@@ -28,16 +33,36 @@ const RESULT_KEYS = {
   error: "friends.msgError",
 } as const;
 
+const GIFT_RESULT_KEYS = {
+  sent: "gifts.msgSent",
+  "not-friend": "gifts.msgNotFriend",
+  error: "gifts.msgError",
+} as const;
+
+function pastryName(id: string): string {
+  return pastries.find((pastry) => pastry.id === id)?.name ?? id;
+}
+
 export function FriendsView() {
   const { t } = useTranslation();
-  const { appState } = useApp();
+  const { appState, handleSendGift, handleClaimGift } = useApp();
   const user = appState.user;
   const { friends, incoming, outgoing, friendEntries, addFriend, accept, remove } =
     useFriends(user?.uid, user?.username);
+  const { incomingGifts } = useGifts(user?.uid);
 
   const [target, setTarget] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const [giftTarget, setGiftTarget] = useState<Friend | null>(null);
+  const [giftBusy, setGiftBusy] = useState(false);
+  const [giftNotice, setGiftNotice] = useState("");
+  const [claimBusyId, setClaimBusyId] = useState("");
+  const [claimNotice, setClaimNotice] = useState("");
+
+  const coins = user ? Math.max(0, Math.floor(user.coins)) : 0;
+  const canAffordGift = coins >= GIFT_COST_COINS;
 
   const currentWeek = weekKey();
 
@@ -89,6 +114,48 @@ export function FriendsView() {
     }
   }
 
+  async function handlePickGift(pastryId: string) {
+    if (!giftTarget || giftBusy) {
+      return;
+    }
+
+    setGiftBusy(true);
+
+    try {
+      const result = await handleSendGift(
+        giftTarget.uid,
+        giftTarget.username,
+        pastryId,
+      );
+      setGiftNotice(t(GIFT_RESULT_KEYS[result.status]));
+      if (result.status === "sent") {
+        setGiftTarget(null);
+      }
+    } finally {
+      setGiftBusy(false);
+    }
+  }
+
+  async function handleClaim(gift: Gift) {
+    if (claimBusyId) {
+      return;
+    }
+
+    const isDuplicate = appState.unlockedPastryIds.includes(gift.pastryId);
+    setClaimBusyId(gift.id);
+
+    try {
+      await handleClaimGift(gift);
+      setClaimNotice(
+        isDuplicate
+          ? t("gifts.gotCoins", { coins: GIFT_DUPLICATE_COINS })
+          : t("gifts.unlocked", { pastry: pastryName(gift.pastryId) }),
+      );
+    } finally {
+      setClaimBusyId("");
+    }
+  }
+
   if (!user) {
     return null;
   }
@@ -128,6 +195,45 @@ export function FriendsView() {
         )}
         <p className="field-hint">{t("friends.addHint")}</p>
       </section>
+
+      {incomingGifts.length > 0 && (
+        <section className="page-card">
+          <h2>{t("gifts.inboxHeading")}</h2>
+          <ul className="gift-inbox">
+            {incomingGifts.map((gift) => (
+              <li className="gift-inbox__item" key={gift.id}>
+                <img
+                  alt=""
+                  aria-hidden="true"
+                  className="gift-inbox__sprite"
+                  src={pastrySprites[gift.pastryId]}
+                />
+                <span className="gift-inbox__text">
+                  {t("gifts.received", {
+                    from: gift.fromUsername,
+                    pastry: pastryName(gift.pastryId),
+                  })}
+                </span>
+                <button
+                  className="button primary"
+                  disabled={claimBusyId === gift.id}
+                  onClick={() => void handleClaim(gift)}
+                  type="button"
+                >
+                  {claimBusyId === gift.id
+                    ? t("gifts.claiming")
+                    : t("gifts.claim")}
+                </button>
+              </li>
+            ))}
+          </ul>
+          {claimNotice && (
+            <p className="auth-notice" role="status">
+              {claimNotice}
+            </p>
+          )}
+        </section>
+      )}
 
       {incoming.length > 0 && (
         <section className="page-card">
@@ -198,13 +304,25 @@ export function FriendsView() {
             {friends.map((friend) => (
               <li className="friends-list__item" key={friend.id}>
                 <span className="friends-list__name">{friend.username}</span>
-                <button
-                  className="button tag-delete-button"
-                  onClick={() => void remove(friend.id)}
-                  type="button"
-                >
-                  {t("friends.remove")}
-                </button>
+                <div className="friends-list__actions">
+                  <button
+                    className="button"
+                    onClick={() => {
+                      setGiftTarget(friend);
+                      setGiftNotice("");
+                    }}
+                    type="button"
+                  >
+                    🎁 {t("gifts.sendButton")}
+                  </button>
+                  <button
+                    className="button tag-delete-button"
+                    onClick={() => void remove(friend.id)}
+                    type="button"
+                  >
+                    {t("friends.remove")}
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -214,7 +332,67 @@ export function FriendsView() {
             {t("friends.outgoingPending", { count: outgoing.length })}
           </p>
         )}
+        {giftNotice && (
+          <p className="auth-notice" role="status">
+            {giftNotice}
+          </p>
+        )}
       </section>
+
+      {giftTarget && (
+        <div
+          className="gift-picker-backdrop"
+          onClick={() => {
+            if (!giftBusy) {
+              setGiftTarget(null);
+            }
+          }}
+          role="presentation"
+        >
+          <div
+            className="gift-picker"
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <h2 className="gift-picker__title">
+              {t("gifts.pickHeading", { name: giftTarget.username })}
+            </h2>
+            <p className="field-hint">{t("gifts.pickIntro")}</p>
+            <p className="gift-picker__cost">
+              {t("gifts.cost", { coins: GIFT_COST_COINS })}
+            </p>
+            {!canAffordGift && (
+              <p className="auth-error" role="status">
+                {t("gifts.notEnough", { coins: GIFT_COST_COINS })}
+              </p>
+            )}
+            <ul className="gift-picker__grid">
+              {appState.unlockedPastryIds.map((id) => (
+                <li key={id}>
+                  <button
+                    className="gift-picker__pastry"
+                    disabled={!canAffordGift || giftBusy}
+                    onClick={() => void handlePickGift(id)}
+                    type="button"
+                  >
+                    <img alt="" aria-hidden="true" src={pastrySprites[id]} />
+                    <span>{pastryName(id)}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <button
+              className="button"
+              disabled={giftBusy}
+              onClick={() => setGiftTarget(null)}
+              type="button"
+            >
+              {t("common.cancel")}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

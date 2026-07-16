@@ -32,6 +32,14 @@ import {
 } from "../utils/authService";
 import { missingFirebaseConfigMessage } from "../utils/firebase";
 import { upsertLeaderboardStats } from "../services/friendService";
+import {
+  createGift,
+  markGiftClaimed,
+  GIFT_COST_COINS,
+  GIFT_DUPLICATE_COINS,
+  type Gift,
+  type SendGiftResult,
+} from "../services/giftService";
 import { initPushNotifications } from "../services/pushNotifications";
 import { DAILY_GOAL_REWARD_COINS } from "../services/userProfileService";
 import {
@@ -68,6 +76,12 @@ type AppContextValue = {
   handleDailyGoalChange: (minutes: number) => void;
   handleSelectPastry: (pastryId: string) => void;
   handleBuyPastry: (pastryId: string) => void;
+  handleSendGift: (
+    toUid: string,
+    toUsername: string,
+    pastryId: string,
+  ) => Promise<SendGiftResult>;
+  handleClaimGift: (gift: Gift) => Promise<void>;
   handleBuyStreakFreeze: () => void;
   handleAudioSettingsChange: (audioSettings: AudioSettings) => void;
   handleTagsChange: (tags: StudyTag[]) => void;
@@ -324,6 +338,67 @@ export function AppProvider() {
       unlockedPastryIds: [...appState.unlockedPastryIds, pastry.id],
     });
     trackEvent("pastry_purchased", { pastryId: pastry.id, price: pastry.price });
+  }
+
+  // Gift a pastry from your collection to a confirmed friend. The gift doc is
+  // created first, and only if that succeeds are the sender's coins deducted —
+  // so the one non-atomic failure mode (create ok, deduct fails) just means a
+  // free gift, never a charge with nothing sent.
+  async function handleSendGift(
+    toUid: string,
+    toUsername: string,
+    pastryId: string,
+  ): Promise<SendGiftResult> {
+    const user = appState.user;
+    const coins = user ? Math.max(0, Math.floor(user.coins)) : 0;
+
+    if (
+      !user ||
+      !user.uid ||
+      !toUid.trim() ||
+      !appState.unlockedPastryIds.includes(pastryId) ||
+      coins < GIFT_COST_COINS
+    ) {
+      return { status: "error" };
+    }
+
+    const giftId = await createGift(
+      user.uid,
+      user.username,
+      toUid,
+      toUsername,
+      pastryId,
+    );
+
+    if (!giftId) {
+      return { status: "not-friend" };
+    }
+
+    void updateUserProfile({ coins: coins - GIFT_COST_COINS });
+    trackEvent("gift_sent", { pastryId, cost: GIFT_COST_COINS });
+    return { status: "sent" };
+  }
+
+  // Claim an incoming gift: unlock the pastry if it's new, otherwise take a small
+  // coin consolation. The profile onSnapshot folds the change back into appState.
+  async function handleClaimGift(gift: Gift): Promise<void> {
+    const user = appState.user;
+
+    if (!user) {
+      return;
+    }
+
+    if (appState.unlockedPastryIds.includes(gift.pastryId)) {
+      const coins = Math.max(0, Math.floor(user.coins));
+      void updateUserProfile({ coins: coins + GIFT_DUPLICATE_COINS });
+    } else {
+      void updateUserProfile({
+        unlockedPastryIds: [...appState.unlockedPastryIds, gift.pastryId],
+      });
+    }
+
+    await markGiftClaimed(gift.id);
+    trackEvent("gift_claimed", { pastryId: gift.pastryId });
   }
 
   function handleBuyStreakFreeze() {
@@ -626,6 +701,8 @@ export function AppProvider() {
     handleDailyGoalChange,
     handleSelectPastry,
     handleBuyPastry,
+    handleSendGift,
+    handleClaimGift,
     handleBuyStreakFreeze,
     handleAudioSettingsChange,
     handleTagsChange,

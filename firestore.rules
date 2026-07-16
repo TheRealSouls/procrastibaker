@@ -186,6 +186,33 @@ service cloud.firestore {
         && isOptionalTimestamp(data, 'updatedAt');
     }
 
+    function isGift() {
+      let data = request.resource.data;
+
+      return data.keys().hasOnly([
+          'fromUid',
+          'fromUsername',
+          'toUid',
+          'toUsername',
+          'pastryId',
+          'status',
+          'createdAt'
+        ])
+        && data.fromUid is string
+        && data.fromUid.size() <= 128
+        && data.toUid is string
+        && data.toUid.size() <= 128
+        && data.fromUsername is string
+        && data.fromUsername.size() <= 32
+        && data.toUsername is string
+        && data.toUsername.size() <= 32
+        && data.pastryId is string
+        && data.pastryId.size() > 0
+        && data.pastryId.size() <= 64
+        && data.status in ['unclaimed', 'claimed']
+        && isOptionalTimestamp(data, 'createdAt');
+    }
+
     function isStudyTag() {
       let data = request.resource.data;
 
@@ -289,6 +316,35 @@ service cloud.firestore {
         && request.resource.data.platform is string
         && request.resource.data.platform.size() <= 16
         && isOptionalTimestamp(request.resource.data, 'updatedAt');
+    }
+
+    // Pastry gifts, one doc per gift (auto-id). Either party can read/delete;
+    // only the sender creates a pending ('unclaimed') gift to a *confirmed friend*;
+    // only the recipient may flip it to 'claimed' (and nothing else). The sender's
+    // coin cost is deducted on their own profile client-side — rules can't verify
+    // payment, but the blast radius is only unlocking a pastry for a confirmed friend.
+    match /gifts/{id} {
+      allow get: if request.auth != null
+        && (resource.data.fromUid == request.auth.uid
+          || resource.data.toUid == request.auth.uid);
+      // Listing is allowed only for queries constrained to the caller (the client
+      // filters by toUid == me).
+      allow list: if request.auth != null
+        && (resource.data.fromUid == request.auth.uid
+          || resource.data.toUid == request.auth.uid);
+      allow create: if request.auth != null
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.status == 'unclaimed'
+        && isAcceptedFriend(request.resource.data.toUid)
+        && isGift();
+      allow update: if request.auth != null
+        && resource.data.toUid == request.auth.uid
+        && resource.data.status == 'unclaimed'
+        && request.resource.data.status == 'claimed'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      allow delete: if request.auth != null
+        && (resource.data.fromUid == request.auth.uid
+          || resource.data.toUid == request.auth.uid);
     }
 
     match /{document=**} {

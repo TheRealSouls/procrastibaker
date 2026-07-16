@@ -202,6 +202,24 @@
     "outgoingPending_one": "{{count}} request pending.",
     "outgoingPending_other": "{{count}} requests pending."
   },
+  "gifts": {
+    "sendButton": "Send pastry",
+    "pickHeading": "Send a pastry to {{name}}",
+    "pickIntro": "Pick one from your collection to gift.",
+    "cost": "Costs {{coins}} coins",
+    "confirm": "Send gift",
+    "sending": "Sending...",
+    "notEnough": "You need {{coins}} coins to send a gift.",
+    "msgSent": "Gift sent! 🎁",
+    "msgNotFriend": "Couldn't send — you can only gift confirmed friends.",
+    "msgError": "Something went wrong. Please try again.",
+    "inboxHeading": "Your gifts",
+    "received": "{{from}} sent you a {{pastry}} 🎁",
+    "claim": "Claim",
+    "claiming": "Claiming...",
+    "unlocked": "Unlocked {{pastry}}!",
+    "gotCoins": "You already had it — +{{coins}} coins instead."
+  },
   "verify": {
     "title": "Verify your email",
     "body": "We sent a confirmation link to {{email}}. Verify to secure your account and password resets.",
