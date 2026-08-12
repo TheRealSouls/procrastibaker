@@ -133,7 +133,7 @@ export async function logout() {
       );
       await FirebaseAuthentication.signOut();
     } catch {
-      // Native plugin unavailable — ignore.
+      // Native plugin unavailable, ignore.
     }
   }
 
@@ -227,7 +227,7 @@ function normalizeAppUser(user: UserInput): User {
     coins: Math.max(0, Math.floor(user.coins)),
     authProvider: user.authProvider === "google" ? "google" : "email",
     emailVerified: user.emailVerified ?? false,
-    // Placeholders — the live values come from the Firestore profile via
+    // Placeholders, the live values come from the Firestore profile via
     // buildCloudAppState; this User is only used for its uid + authProvider.
     usernameChangedAt: 0,
     streakCount: 0,

@@ -37,7 +37,7 @@ export function totalFocusMinutes(sessions: StudySession[]): number {
     .reduce((total, session) => total + session.durationMinutes, 0);
 }
 
-// Completed focus minutes on a given local day (defaults to today) — powers the
+// Completed focus minutes on a given local day (defaults to today), powers the
 // daily-goal progress and its once-per-day bonus.
 export function focusMinutesOnDate(
   sessions: StudySession[],

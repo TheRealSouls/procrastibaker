@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { CoinIcon } from "../components/CoinIcon";
 import { PastryCard } from "../components/PastryCard";
 import { pastries } from "../data/pastries";
 import snowflakeSprite from "../media/sprites/snowflake.png";
@@ -37,6 +38,7 @@ export function ShopView({
           <p>{t("shop.intro")}</p>
         </div>
         <div className="shop-wallet" aria-label={t("shop.walletAria")}>
+          <CoinIcon className="coin-icon--lg" />
           <strong>{coins}</strong>
           <span>{t("shop.coins")}</span>
         </div>

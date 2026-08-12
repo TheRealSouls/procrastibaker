@@ -305,7 +305,7 @@ export function getWeekOverWeekDelta(
   const previous = weekly[weekly.length - 2].minutes;
 
   if (previous === 0) {
-    // Nothing to compare against — surface "new" progress only if there is some.
+    // Nothing to compare against, surface "new" progress only if there is some.
     return current > 0 ? { current, previous, deltaPercent: null } : null;
   }
 

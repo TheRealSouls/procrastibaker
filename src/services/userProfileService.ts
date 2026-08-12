@@ -116,7 +116,35 @@ export async function createUserProfileIfMissing(user: User) {
       updatedAt: serverTimestamp(),
     };
 
-    await setDoc(userRef, profile);
+    try {
+      await setDoc(userRef, profile);
+    } catch (error) {
+      // An older deployed ruleset whitelists fewer profile fields, and its
+      // hasOnly() check rejects the whole write, which would otherwise brick
+      // sign-up entirely. Newer fields are all optional, so retry without them
+      // rather than leaving the account with no profile at all.
+      if (getFirestoreErrorCode(error) !== "permission-denied") {
+        throw error;
+      }
+
+      console.warn(
+        "Profile write rejected, retrying without newer optional fields. Deploy the latest firestore.rules to keep them.",
+        error,
+      );
+
+      const legacyProfile = { ...profile };
+      delete (legacyProfile as Partial<typeof profile>).giftablePastries;
+      await setDoc(userRef, legacyProfile);
+
+      return {
+        uid,
+        ...legacyProfile,
+        giftablePastries: {},
+        usernameChangedAt: null,
+        createdAt: null,
+        updatedAt: null,
+      };
+    }
 
     return {
       uid,
@@ -273,6 +301,15 @@ export async function changeUsername(
     console.error("Firestore change username failed", error);
     return { status: "error" };
   }
+}
+
+function getFirestoreErrorCode(error: unknown): string {
+  return typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof (error as { code?: unknown }).code === "string"
+    ? (error as { code: string }).code
+    : "";
 }
 
 function normalizeUserProfile(

@@ -94,7 +94,7 @@ export function AccountView() {
       } else if (result.status === "error") {
         setDeleteError(result.message ?? t("account.genericError"));
       }
-      // On success the handler navigates away — nothing more to do here.
+      // On success the handler navigates away, nothing more to do here.
     } finally {
       setBusy("idle");
     }
@@ -116,7 +116,7 @@ export function AccountView() {
           </div>
           <div>
             <dt>{t("account.email")}</dt>
-            <dd>{user.email || "—"}</dd>
+            <dd>{user.email || ", "}</dd>
           </div>
           <div>
             <dt>{t("account.signInMethod")}</dt>
@@ -283,12 +283,12 @@ function ReminderSettings() {
 
   // Backfill the server copy (and refresh the timezone offset) once we know the
   // user, so the scheduled push function has current settings even if the user
-  // last changed them before this feature — or from another device.
+  // last changed them before this feature, or from another device.
   useEffect(() => {
     if (uid) {
       void saveReminderSettings(uid, prefs);
     }
-    // Only on uid change — later edits sync through the handlers below.
+    // Only on uid change, later edits sync through the handlers below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid]);
 

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useBlocker, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ConfirmationModal } from "../components/ConfirmationModal";
+import { useApp } from "../context/AppContext";
 import { DurationSelector } from "../components/DurationSelector";
 import { FocusHeatmap } from "../components/FocusHeatmap";
 import { Oven, type OvenStatus } from "../components/Oven";
@@ -40,7 +41,7 @@ type TimerViewProps = {
     durationMinutes: number,
     startedAt: string,
     pastryId: string,
-  ) => void;
+  ) => void | Promise<void>;
   onCompleteSession: (
     tag: StudyTag,
     durationMinutes: number,
@@ -60,6 +61,7 @@ export function TimerView({
 }: TimerViewProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { registerSessionGuard } = useApp();
   const [duration, setDuration] = useState(25);
   const [selectedTagId, setSelectedTagId] = useState(DEFAULT_TAGS[0].id);
   const [phase, setPhase] = useState<TimerPhase>("setup");
@@ -121,8 +123,39 @@ export function TimerView({
   }, [remainingSeconds]);
 
   // Block in-app navigation (incl. browser back/forward) while a bake runs.
-  // On confirm we just proceed — the unmount cleanup expires the pastry.
+  // On confirm we just proceed, the unmount cleanup expires the pastry.
   const blocker = useBlocker(phase === "active" || phase === "paused");
+
+  // While a bake runs, hand the shell a finaliser it can await before signing
+  // out, so the pastry is expired and logged while the user is still
+  // authenticated (after sign-out the Firestore write would be rejected).
+  useEffect(() => {
+    if (phase !== "active" && phase !== "paused") {
+      registerSessionGuard(null);
+      return;
+    }
+
+    registerSessionGuard(async () => {
+      const activeSession = activeSessionRef.current;
+
+      if (!activeSession || finalizedRef.current) {
+        return;
+      }
+
+      finalizedRef.current = true;
+      activeSessionRef.current = null;
+      await onCancelSessionRef.current(
+        activeSession.tag,
+        activeSession.duration,
+        activeSession.startedAt,
+        activeSession.pastryId,
+      );
+      phaseRef.current = "expired";
+      setPhase("expired");
+    });
+
+    return () => registerSessionGuard(null);
+  }, [phase, registerSessionGuard]);
 
   useEffect(() => {
     if (!findTagById(state.tags, selectedTagId)) {

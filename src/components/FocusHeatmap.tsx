@@ -9,7 +9,7 @@ type FocusHeatmapProps = {
   data: HeatmapData;
 };
 
-// Weekday chrome stays in English for now — localizing calendar labels is a
+// Weekday chrome stays in English for now, localizing calendar labels is a
 // later date-formatting concern (see i18n plan).
 const WEEKDAY_LABELS = ["Mon", "", "Wed", "", "Fri", "", ""];
 const WEEKDAY_FULL = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

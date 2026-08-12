@@ -13,7 +13,7 @@ import {
 //   - rain / forest / oven → a single seamless looping ambience
 //
 // Architecture: two HTMLAudioElement "decks" kept in refs (never in state). One
-// deck is active; the other is used to crossfade — either to the next lo-fi
+// deck is active; the other is used to crossfade, either to the next lo-fi
 // track or when switching packs. At most two files are ever loaded, so it stays
 // light and quick. React state holds only what the UI shows.
 
@@ -396,13 +396,13 @@ export function LofiPlayerProvider({ children }: { children: ReactNode }) {
       deck.addEventListener("ended", onEnded);
     }
 
-    // The player is available immediately — loop packs (rain/forest/oven) are
+    // The player is available immediately, loop packs (rain/forest/oven) are
     // bundled static files; the lo-fi playlist is fetched below.
     readyRef.current = true;
     setAvailable(true);
 
     // Preload the current pack into the active deck (paused, volume 0) so pressing
-    // play is instant. Playback NEVER starts on its own — only an explicit play
+    // play is instant. Playback NEVER starts on its own, only an explicit play
     // press begins audio, so a stray click never triggers music.
     if (findPack(packRef.current).kind === "loop") {
       loadPackIntoDeck(decksRef.current[activeRef.current], packRef.current);

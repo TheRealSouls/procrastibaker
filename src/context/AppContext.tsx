@@ -1,7 +1,9 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -67,9 +69,14 @@ type AppContextValue = {
   handleEmailSignIn: (email: string, password: string) => void;
   handleEmailSignUp: (email: string, password: string) => void;
   handlePasswordReset: (email: string) => void;
-  handleResendVerification: () => Promise<boolean>;
+  handleResendVerification: () => Promise<ResendVerificationResult>;
   handleRefreshVerification: () => Promise<boolean>;
   handleLogout: () => void;
+  // True while a bake is running, so the shell can warn before signing out.
+  hasActiveSession: boolean;
+  // The timer registers a finaliser here that expires and logs the running bake.
+  registerSessionGuard: (guard: (() => Promise<void>) | null) => void;
+  discardActiveSession: () => Promise<void>;
   handleResetData: () => void;
   handleUsernameChange: (username: string) => Promise<UsernameChangeResult>;
   handleDailyGoalChange: (minutes: number) => void;
@@ -95,7 +102,7 @@ type AppContextValue = {
     durationMinutes: number,
     startedAt: string,
     pastryId: string,
-  ) => void;
+  ) => Promise<void>;
   handleAddCoins: () => void;
   handleAddDemoCompletedSessions: () => void;
   handleAddDemoExpiredSessions: () => void;
@@ -106,6 +113,11 @@ type AppContextValue = {
 
 export type DeleteAccountResult = {
   status: "ok" | "password-required" | "error";
+  message?: string;
+};
+
+export type ResendVerificationResult = {
+  ok: boolean;
   message?: string;
 };
 
@@ -142,6 +154,32 @@ export function AppProvider() {
   const [authError, setAuthError] = useState("");
   const [authNotice, setAuthNotice] = useState("");
   const [isAuthLoading, setIsAuthLoading] = useState(false);
+  // Set by the timer while a bake runs. Lets the shell confirm before sign-out
+  // and, on confirm, expire + log the pastry while the user is still authed.
+  const sessionGuardRef = useRef<(() => Promise<void>) | null>(null);
+  const [hasActiveSession, setHasActiveSession] = useState(false);
+
+  const registerSessionGuard = useCallback(
+    (guard: (() => Promise<void>) | null) => {
+      sessionGuardRef.current = guard;
+      setHasActiveSession(Boolean(guard));
+    },
+    [],
+  );
+
+  const discardActiveSession = useCallback(async () => {
+    const guard = sessionGuardRef.current;
+    sessionGuardRef.current = null;
+    setHasActiveSession(false);
+
+    if (guard) {
+      try {
+        await guard();
+      } catch (error) {
+        console.error("Discarding the active session failed", error);
+      }
+    }
+  }, []);
 
   // Tie the signed-in user to analytics/Sentry (covers restored sessions).
   const userUid = appState.user?.uid;
@@ -160,7 +198,7 @@ export function AppProvider() {
     }
   }, [userUid]);
 
-  // Page views are now real routes — track each distinct path.
+  // Page views are now real routes, track each distinct path.
   useEffect(() => {
     trackView(location.pathname);
   }, [location.pathname]);
@@ -257,15 +295,16 @@ export function AppProvider() {
     }
   }
 
-  // Returns true when the email was sent. The banner owns the user-facing
-  // notice so this stays decoupled from the login-screen notices.
-  async function handleResendVerification(): Promise<boolean> {
+  // Reports whether the email actually went out, and why not when it failed, so
+  // the banner can distinguish "we could not send it" from "you have not clicked
+  // the link yet". Those need very different advice.
+  async function handleResendVerification(): Promise<ResendVerificationResult> {
     try {
       await sendVerificationEmail();
-      return true;
+      return { ok: true };
     } catch (error) {
       console.error("Resend verification email failed", error);
-      return false;
+      return { ok: false, message: getVerificationErrorMessage(error) };
     }
   }
 
@@ -340,7 +379,7 @@ export function AppProvider() {
   }
 
   // Gift a pastry you baked (earned from a focus session) to a confirmed friend.
-  // Consumes one unit of that pastry from your giftable stock — no coins. The
+  // Consumes one unit of that pastry from your giftable stock, no coins. The
   // stock is decremented first, and only then is the gift doc created; if the
   // create fails the stock is restored so you never lose a bake for nothing.
   async function handleSendGift(
@@ -372,7 +411,7 @@ export function AppProvider() {
     );
 
     if (!giftId) {
-      // Refund the bake — the send didn't go through.
+      // Refund the bake, the send didn't go through.
       void updateUserProfile({
         giftablePastries: addGiftable(remaining, pastryId),
       });
@@ -552,7 +591,7 @@ export function AppProvider() {
     })();
   }
 
-  function handleCancelSession(
+  async function handleCancelSession(
     tag: StudyTag,
     durationMinutes: number,
     startedAt: string,
@@ -564,7 +603,9 @@ export function AppProvider() {
       return;
     }
 
-    void addExpiredSession({
+    // Awaited (not fire-and-forget) so callers such as the sign-out guard can be
+    // sure the expired bake is written before the session ends.
+    await addExpiredSession({
       id: crypto.randomUUID(),
       pastryId: pastry.id,
       pastryName: pastry.name,
@@ -660,8 +701,25 @@ export function AppProvider() {
         };
       }
 
-      // 3. Delete the auth account, then clear local + analytics identity.
-      await deleteCurrentUser();
+      // 3. Delete the auth account, then clear local + analytics identity. The
+      // data is already gone at this point, so a failure here leaves a login with
+      // no bakery behind it. Say so plainly and sign them out rather than
+      // claiming nothing was deleted.
+      try {
+        await deleteCurrentUser();
+      } catch (deleteError) {
+        console.error("Auth account deletion failed", deleteError);
+        resetAnalytics();
+        resetAppState();
+        await logout().catch(() => undefined);
+        navigate("/");
+        return {
+          status: "error",
+          message:
+            "Your bakery data was deleted, but your sign-in could not be removed. Sign in once more and delete the account again to finish.",
+        };
+      }
+
       trackEvent("account_deleted");
       resetAnalytics();
       resetAppState();
@@ -708,6 +766,9 @@ export function AppProvider() {
     handleResendVerification,
     handleRefreshVerification,
     handleLogout,
+    hasActiveSession,
+    registerSessionGuard,
+    discardActiveSession,
     handleResetData,
     handleUsernameChange,
     handleDailyGoalChange,
@@ -791,6 +852,25 @@ function getAuthErrorCode(error: unknown): string {
     : "";
 }
 
+// Verification sends fail for a small, specific set of reasons. Naming them
+// beats a generic "something went wrong" when an inbox stays empty.
+function getVerificationErrorMessage(error: unknown): string {
+  switch (getAuthErrorCode(error)) {
+    case "auth/too-many-requests":
+      return "Too many requests. Wait a few minutes, then try again.";
+    case "auth/unauthorized-continue-uri":
+    case "auth/invalid-continue-uri":
+      return "This site is not an authorised domain for sign-in emails. Add it under Firebase Authentication, Settings, Authorized domains.";
+    case "auth/user-token-expired":
+    case "auth/user-not-found":
+      return "Your session expired. Sign in again, then resend the email.";
+    case "auth/network-request-failed":
+      return "Network error. Check your connection and try again.";
+    default:
+      return "We could not send that email. Please try again shortly.";
+  }
+}
+
 function getEmailAuthErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message === missingFirebaseConfigMessage) {
     return missingFirebaseConfigMessage;
@@ -798,7 +878,7 @@ function getEmailAuthErrorMessage(error: unknown): string {
 
   switch (getAuthErrorCode(error)) {
     case "auth/email-already-in-use":
-      return "That email already has an account. Try signing in instead.";
+      return "That email already has an account. Sign in instead, and if you first joined with Google use the Google button.";
     case "auth/invalid-email":
       return "That email address doesn't look right.";
     case "auth/missing-password":

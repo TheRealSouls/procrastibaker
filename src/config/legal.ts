@@ -1,5 +1,5 @@
 // Central place for the legal/contact details that a human must fill in before
-// a public launch. Everything in square brackets is a PLACEHOLDER — replace it
+// a public launch. Everything in square brackets is a PLACEHOLDER, replace it
 // with your real company information (see COMPLIANCE.md → Manual Actions).
 export const LEGAL = {
   appName: "Procrastibaker",
@@ -19,7 +19,7 @@ export const THIRD_PARTY_PROCESSORS = [
     name: "Google Firebase (Authentication, Cloud Firestore, Hosting, App Check)",
     purpose: "Account sign-in, storing your profile/sessions, serving the app, bot protection",
     data: "Email, account identifier (uid), profile + study data, IP address",
-    region: "Google LLC — global infrastructure",
+    region: "Google LLC, global infrastructure",
     policy: "https://firebase.google.com/support/privacy",
   },
   {

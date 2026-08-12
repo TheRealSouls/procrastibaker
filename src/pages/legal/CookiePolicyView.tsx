@@ -15,21 +15,21 @@ export function CookiePolicyView() {
       <p>These are required for the app to function and do not require consent:</p>
       <ul>
         <li>
-          <strong>Firebase Authentication</strong> — keeps you signed in (stored
+          <strong>Firebase Authentication</strong>, keeps you signed in (stored
           in the browser&rsquo;s IndexedDB/localStorage).
         </li>
         <li>
-          <strong>App state cache</strong> — a{" "}
+          <strong>App state cache</strong>, a{" "}
           <code>procrastibaker-app-state</code> localStorage entry that caches
           your progress for offline use.
         </li>
         <li>
-          <strong>Google reCAPTCHA / App Check</strong> — sets a Google security
+          <strong>Google reCAPTCHA / App Check</strong>, sets a Google security
           cookie (e.g. <code>_GRECAPTCHA</code>) strictly to detect bots and
           abuse on sign-in and the feedback form.
         </li>
         <li>
-          <strong>Your preferences</strong> — small localStorage entries such as
+          <strong>Your preferences</strong>, small localStorage entries such as
           your analytics opt-out choice.
         </li>
       </ul>
@@ -37,7 +37,7 @@ export function CookiePolicyView() {
       <h2>2. Analytics (cookieless)</h2>
       <p>
         Our product analytics (PostHog, EU) is configured to use localStorage
-        rather than cookies, to respect Do-Not-Track, and to disable session
+        rather than cookies, to respect Do-Not-Track and to disable session
         recording. Because it does not use cookies and is used for a legitimate,
         privacy-preserving purpose, it does not place tracking cookies on your
         device. You can still opt out completely in <em>Account &amp; Privacy</em>.

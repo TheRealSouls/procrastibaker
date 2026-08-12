@@ -21,13 +21,13 @@ export async function initNativeShell(): Promise<void> {
     await StatusBar.setStyle({ style: Style.Dark });
     await StatusBar.setBackgroundColor({ color: "#ffd76a" });
   } catch {
-    // StatusBar isn't available on this platform — ignore.
+    // StatusBar isn't available on this platform, ignore.
   }
 
   try {
     const { SplashScreen } = await import("@capacitor/splash-screen");
     await SplashScreen.hide();
   } catch {
-    // SplashScreen isn't available — ignore.
+    // SplashScreen isn't available, ignore.
   }
 }

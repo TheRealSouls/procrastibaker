@@ -53,7 +53,7 @@ function clip(value: string, max: number): string {
 
 // Reading a *non-existent* friendRequests doc is denied by the security rules
 // (they dereference resource.data, which is null when the doc is missing), so
-// getDoc throws permission-denied. Treat any read failure as "not there" — the
+// getDoc throws permission-denied. Treat any read failure as "not there", the
 // caller only needs to know whether an existing relationship is present.
 async function tryGetDoc(
   ref: DocumentReference<DocumentData>,
@@ -87,7 +87,7 @@ export async function ensureUsernameClaim(
       await setDoc(ref, { uid });
     }
   } catch (error) {
-    // Name taken by another user, or offline — discovery just won't include us.
+    // Name taken by another user, or offline, discovery just won't include us.
     console.debug("Username claim skipped", error);
   }
 }
@@ -183,7 +183,7 @@ export async function acceptFriendRequest(id: string): Promise<boolean> {
 }
 
 // Used for declining an incoming request, cancelling an outgoing one, or
-// removing an existing friend — all just delete the relationship doc.
+// removing an existing friend, all just delete the relationship doc.
 export async function removeFriendLink(id: string): Promise<boolean> {
   const firestore = getOptionalFirestore();
 
@@ -201,7 +201,7 @@ export async function removeFriendLink(id: string): Promise<boolean> {
 }
 
 // One listener over the requests we sent, one over the requests we received.
-// The caller derives friends / incoming / outgoing from the two lists — this
+// The caller derives friends / incoming / outgoing from the two lists, this
 // keeps every query to a single equality filter (no composite index needed).
 export function listenToSentLinks(
   uid: string,

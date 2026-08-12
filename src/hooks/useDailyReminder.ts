@@ -19,7 +19,7 @@ function notificationsGranted(): boolean {
 
 /**
  * Fires a local browser notification at the user's chosen time if they haven't
- * hit today's focus goal — once per day. It also "catches up" on app open if the
+ * hit today's focus goal, once per day. It also "catches up" on app open if the
  * time has already passed. This is best-effort and only runs while a tab is open
  * (true background push would need a service worker + FCM).
  */
@@ -63,7 +63,7 @@ export function useDailyReminder(goalMet: boolean) {
       setReminderLastFired(today);
       try {
         const notification = new Notification("Procrastibaker", {
-          body: "You haven't hit today's focus goal yet — time for a quick bake?",
+          body: "You haven't hit today's focus goal yet, wanna bake a cookie or two? yum yum",
           icon: croissantIcon,
         });
         notification.onclick = () => {
@@ -71,7 +71,7 @@ export function useDailyReminder(goalMet: boolean) {
           notification.close();
         };
       } catch {
-        // Some browsers require notifications from a service worker — ignore.
+        // Some browsers require notifications from a service worker, ignore.
       }
     }
 

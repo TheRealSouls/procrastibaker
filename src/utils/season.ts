@@ -31,7 +31,7 @@ export function isPastryInSeason(
 }
 
 // A pastry should be shown in the catalog (shop / picker) when it is in season,
-// or when the player already owns it — so owned seasonal bakes never vanish.
+// or when the player already owns it, so owned seasonal bakes never vanish.
 export function isPastryVisible(
   pastry: Pastry,
   unlockedPastryIds: string[],

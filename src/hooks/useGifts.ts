@@ -4,7 +4,7 @@ import { listenToIncomingGifts, type Gift } from "../services/giftService";
 /**
  * Subscribes to gifts addressed to the current user and exposes only the
  * unclaimed ones (filtered client-side so the query stays a single equality
- * filter — no composite index, same as {@link useFriends}).
+ * filter, no composite index, same as {@link useFriends}).
  */
 export function useGifts(uid?: string) {
   const [gifts, setGifts] = useState<Gift[]>([]);

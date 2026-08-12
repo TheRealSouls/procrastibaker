@@ -65,7 +65,7 @@ export function initAnalytics() {
   }
 }
 
-/** Tie the current user to both PostHog and Sentry (uid + provider only — no PII). */
+/** Tie the current user to both PostHog and Sentry (uid + provider only, no PII). */
 export function identifyUser(user: Pick<User, "uid" | "authProvider">) {
   if (!user.uid) {
     return;

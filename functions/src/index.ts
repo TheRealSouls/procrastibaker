@@ -48,7 +48,7 @@ export const onGiftCreated = onDocumentCreated("gifts/{giftId}", async (event) =
 // (enabled/time/timezone) are mirrored to reminderSettings/{uid} by the client.
 // ---------------------------------------------------------------------------
 
-// How long after the set time a reminder may still fire — covers the schedule
+// How long after the set time a reminder may still fire, covers the schedule
 // granularity and a missed tick.
 const REMINDER_WINDOW_MINUTES = 60;
 const DEFAULT_GOAL_MINUTES = 60;
@@ -170,8 +170,8 @@ export const sendDailyReminders = onSchedule(
 
       const sent = await sendToUser(
         uid,
-        "Time for a quick bake? 🥐",
-        "You haven't hit today's focus goal yet — a short session keeps your streak alive.",
+        "Procrastibaker",
+        "You haven't hit today's focus goal yet, wanna bake a cookie or two? yum yum",
         { type: "reminder" },
       );
 

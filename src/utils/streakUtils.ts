@@ -1,4 +1,4 @@
-// Pure streak logic — no React/Firebase here, so it is trivially testable.
+// Pure streak logic, no React/Firebase here, so it is trivially testable.
 
 export const MAX_FREEZES = 2;
 export const STREAK_FREEZE_PRICE = 50; // coins

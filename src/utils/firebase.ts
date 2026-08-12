@@ -21,7 +21,7 @@ import {
 import { isNativeApp } from "./capacitor";
 
 // Public App Check (reCAPTCHA v3) site key. Safe to ship. The matching SECRET is
-// registered in the Firebase App Check console only — never in the client.
+// registered in the Firebase App Check console only, never in the client.
 const recaptchaV3SiteKey =
   import.meta.env.VITE_RECAPTCHA_V3_SITE_KEY ??
   "6Ldb-yAtAAAAAGNep5-U-umjrdTucKlS6m_bH8Ni";
@@ -97,7 +97,7 @@ function createFirestore(firebaseApp: FirebaseApp): Firestore {
       }),
     });
   } catch {
-    // Already initialized (e.g. HMR) — fall back to the existing instance.
+    // Already initialized (e.g. HMR), fall back to the existing instance.
     return getFirestore(firebaseApp);
   }
 }

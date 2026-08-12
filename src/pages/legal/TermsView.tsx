@@ -31,32 +31,32 @@ export function TermsView() {
       <ul>
         <li>break the law or infringe others&rsquo; rights while using the Service;</li>
         <li>
-          attempt to disrupt, reverse-engineer, overload, or gain unauthorized
+          attempt to disrupt, reverse-engineer, overload or gain unauthorized
           access to the Service or its infrastructure;
         </li>
         <li>
-          submit unlawful, abusive, or infringing content through the feedback
+          submit unlawful, abusive or infringing content through the feedback
           form or the username/tag fields;
         </li>
         <li>
           use bots or automated means to create accounts or manipulate in-app
-          coins, streaks, or other progress.
+          coins, streaks or other progress.
         </li>
       </ul>
 
       <h2>4. In-app items</h2>
       <p>
-        Coins, pastries, streaks, and streak freezes are virtual items with no
+        Coins, pastries, streaks and streak freezes are virtual items with no
         monetary value. They cannot be exchanged for cash and may be adjusted or
         reset as part of normal operation of the Service.
       </p>
 
       <h2>5. Intellectual property</h2>
       <p>
-        The Service, including its name, design, artwork, and code, is owned by
+        The Service, including its name, design, artwork and code, is owned by
         {" "}
         {LEGAL.companyName} or its licensors and is protected by intellectual
-        property laws. You may not copy, resell, or create derivative works
+        property laws. You may not copy, resell or create derivative works
         except as permitted by an applicable open-source licence. You retain any
         rights to content you submit (such as feedback), and grant us a licence
         to use it to operate and improve the Service.
@@ -65,7 +65,7 @@ export function TermsView() {
       <h2>6. Service availability</h2>
       <p>
         The Service is provided on an &ldquo;as is&rdquo; and &ldquo;as
-        available&rdquo; basis. We may change, suspend, or discontinue features
+        available&rdquo; basis. We may change, suspend or discontinue features
         at any time, and we do not guarantee uninterrupted or error-free
         operation.
       </p>

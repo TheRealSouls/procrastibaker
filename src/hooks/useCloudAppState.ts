@@ -55,13 +55,13 @@ export function useCloudAppState() {
   );
 
   // A signed-in user is always backed by a Firestore profile. The placeholder
-  // (user: null) is used while loading and when signed out — App then shows the
+  // (user: null) is used while loading and when signed out, App then shows the
   // loading screen or the sign-in gate respectively.
   const appState =
     cloudUser?.uid && profile
       ? buildCloudAppState(cloudUser, profile, sessions, tags)
       : placeholderState;
-  // Once auth has resolved with no user, we are NOT loading — App shows the
+  // Once auth has resolved with no user, we are NOT loading, App shows the
   // sign-in gate. We only keep loading while a signed-in user's data syncs.
   const loading = firebaseAvailable
     ? !authReady ||

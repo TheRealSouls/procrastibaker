@@ -6,7 +6,7 @@ export function PrivacyPolicyView() {
     <LegalLayout title="Privacy Policy">
       <p>
         This Privacy Policy explains what information {LEGAL.appName} (&ldquo;we&rdquo;,
-        &ldquo;us&rdquo;) collects, why we collect it, and the choices you have.
+        &ldquo;us&rdquo;) collects, why we collect it and the choices you have.
         It describes only functionality that the app actually provides.
         {LEGAL.appName} is operated by {LEGAL.companyName}.
       </p>
@@ -15,27 +15,27 @@ export function PrivacyPolicyView() {
       <p>We only collect what the app needs to work:</p>
       <ul>
         <li>
-          <strong>Account data</strong> — your email address and, for
+          <strong>Account data</strong>, your email address and, for
           email/password accounts, a securely hashed password (managed by
           Google Firebase Authentication; we never see or store your raw
           password). Google sign-in provides your email and display name.
         </li>
         <li>
-          <strong>Profile &amp; progress</strong> — your chosen username, in-app
+          <strong>Profile &amp; progress</strong>, your chosen username, in-app
           coins, unlocked/selected pastries, audio settings, study streak, and
           your study sessions and custom study tags.
         </li>
         <li>
-          <strong>Feedback</strong> — if you use the feedback form, the message,
-          the category, and (when signed in) your email and username.
+          <strong>Feedback</strong>, if you use the feedback form, the message,
+          the category and (when signed in) your email and username.
         </li>
         <li>
-          <strong>Product &amp; diagnostic data</strong> — anonymous-ish usage
+          <strong>Product &amp; diagnostic data</strong>, anonymous-ish usage
           events tied to your account identifier (e.g. &ldquo;bake completed&rdquo;),
           plus error/crash reports. See &sect;4.
         </li>
         <li>
-          <strong>Technical data</strong> — our processors receive your IP
+          <strong>Technical data</strong>, our processors receive your IP
           address and standard browser metadata as part of ordinary web requests
           and abuse prevention.
         </li>
@@ -51,20 +51,20 @@ export function PrivacyPolicyView() {
       <ul>
         <li>
           <strong>Providing the service</strong> (accounts, saving your bakery
-          and study progress) — <em>performance of a contract</em>.
+          and study progress), <em>performance of a contract</em>.
         </li>
         <li>
           <strong>Security &amp; abuse prevention</strong> (reCAPTCHA / App Check,
-          error monitoring) — <em>legitimate interests</em> and legal obligation.
+          error monitoring), <em>legitimate interests</em> and legal obligation.
         </li>
         <li>
-          <strong>Product analytics</strong> — <em>legitimate interests</em> in
+          <strong>Product analytics</strong>, <em>legitimate interests</em> in
           improving the app, using privacy-friendly, cookieless analytics that
           respects your browser&rsquo;s Do-Not-Track signal. You can opt out at
           any time in <em>Account &amp; Privacy</em>.
         </li>
         <li>
-          <strong>Feedback</strong> — <em>legitimate interests</em> / your
+          <strong>Feedback</strong>, <em>legitimate interests</em> / your
           consent when you choose to contact us.
         </li>
       </ul>
@@ -83,7 +83,7 @@ export function PrivacyPolicyView() {
       <ul>
         {THIRD_PARTY_PROCESSORS.map((processor) => (
           <li key={processor.name}>
-            <strong>{processor.name}</strong> — {processor.purpose}. Data:{" "}
+            <strong>{processor.name}</strong>, {processor.purpose}. Data:{" "}
             {processor.data}. Region: {processor.region}.{" "}
             <a href={processor.policy} rel="noreferrer" target="_blank">
               Privacy policy
@@ -96,7 +96,7 @@ export function PrivacyPolicyView() {
       <h2>5. Analytics</h2>
       <p>
         We use PostHog (EU) for privacy-friendly product analytics. It records
-        which features are used, tied to your account identifier — not your name.
+        which features are used, tied to your account identifier, not your name.
         Session recording is disabled, and Do-Not-Track is respected. You can opt
         out entirely in <em>Account &amp; Privacy</em>.
       </p>
@@ -104,34 +104,34 @@ export function PrivacyPolicyView() {
       <h2>6. Your rights</h2>
       <p>
         Under the GDPR and similar laws you can access, correct, export, delete,
-        restrict, or object to the processing of your data. In the app you can:
+        restrict or object to the processing of your data. In the app you can:
       </p>
       <ul>
         <li>
-          <strong>Access &amp; portability</strong> — export all your data as JSON
+          <strong>Access &amp; portability</strong>, export all your data as JSON
           from <em>Account &amp; Privacy</em>.
         </li>
         <li>
-          <strong>Erasure</strong> — permanently delete your account and all
+          <strong>Erasure</strong>, permanently delete your account and all
           associated data from <em>Account &amp; Privacy</em>.
         </li>
         <li>
-          <strong>Rectification</strong> — update your username from your
-          Dashboard, and your password via the reset flow.
+          <strong>Rectification</strong>, update your username from your
+          Dashboard and your password via the reset flow.
         </li>
         <li>
-          <strong>Object / restrict</strong> — opt out of analytics at any time.
+          <strong>Object / restrict</strong>, opt out of analytics at any time.
         </li>
       </ul>
       <p>
-        To exercise any right, or to complain to a supervisory authority, contact
+        To exercise any right or to complain to a supervisory authority, contact
         us at <strong>{LEGAL.contactEmail}</strong>.
       </p>
 
       <h2>7. Data retention</h2>
       <p>
         We keep your account and study data for as long as your account exists.
-        When you delete your account, your profile, study sessions, and tags are
+        When you delete your account, your profile, study sessions and tags are
         removed from our database and your authentication record is deleted.
         Backups and processor logs may persist for a limited period before being
         overwritten. Feedback messages are retained by our form provider.

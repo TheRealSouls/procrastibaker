@@ -1,5 +1,6 @@
 import { type KeyboardEvent, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { CoinIcon } from "./CoinIcon";
 import { PastryVisual } from "./PastryVisual";
 import { formatMinutes } from "../utils/sessionUtils";
 
@@ -68,7 +69,10 @@ export function SessionSummaryModal({
           </div>
           <div>
             <dt>{t("summary.coins")}</dt>
-            <dd>{t("summary.coinsEarned", { count: summary.coins })}</dd>
+            <dd>
+              <CoinIcon />
+              {t("summary.coinsEarned", { count: summary.coins })}
+            </dd>
           </div>
         </dl>
 

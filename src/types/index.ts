@@ -18,7 +18,7 @@ export type StudyTag = {
 export type User = {
   uid?: string;
   username: string;
-  // Empty for anonymous (guest) users — they have no email until they link Google.
+  // Empty for anonymous (guest) users, they have no email until they link Google.
   email: string;
   coins: number;
   authProvider: "local" | "google" | "anonymous" | "email";

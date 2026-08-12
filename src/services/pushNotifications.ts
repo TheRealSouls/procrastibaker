@@ -70,7 +70,7 @@ export async function initPushNotifications(uid: string): Promise<void> {
       );
     }
 
-    // (Re)register — refires "registration" with the device token for currentUid.
+    // (Re)register, refires "registration" with the device token for currentUid.
     await PushNotifications.register();
   } catch (error) {
     console.error("Push notifications init failed", error);

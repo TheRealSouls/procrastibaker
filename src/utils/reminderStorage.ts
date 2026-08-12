@@ -39,7 +39,7 @@ export function saveReminderPrefs(prefs: ReminderPrefs): void {
     // Notify same-tab listeners (the 'storage' event only fires cross-tab).
     window.dispatchEvent(new Event(REMINDER_CHANGE_EVENT));
   } catch {
-    // Storage unavailable (private mode / quota) — reminders just won't persist.
+    // Storage unavailable (private mode / quota), reminders just won't persist.
   }
 }
 
@@ -55,6 +55,6 @@ export function setReminderLastFired(day: string): void {
   try {
     localStorage.setItem(LAST_FIRED_KEY, day);
   } catch {
-    // Ignore — worst case a reminder can repeat.
+    // Ignore, worst case a reminder can repeat.
   }
 }

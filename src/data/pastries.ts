@@ -62,7 +62,7 @@ export const pastries: Pastry[] = [
     price: 180,
     bakeTimeMultiplier: 1,
     unlockedByDefault: false,
-    description: "A seasonal autumn bake — only in the shop while autumn lasts.",
+    description: "A seasonal autumn bake, only in the shop while autumn lasts.",
     season: "autumn",
   },
   {
@@ -90,7 +90,7 @@ export const pastries: Pastry[] = [
     price: 90,
     bakeTimeMultiplier: 1,
     unlockedByDefault: false,
-    description: "The flaky mascot bake — buttery layers for buttery-smooth focus.",
+    description: "The flaky mascot bake, buttery layers for buttery-smooth focus.",
   },
   {
     id: "gingerbread-man",
@@ -99,7 +99,7 @@ export const pastries: Pastry[] = [
     price: 160,
     bakeTimeMultiplier: 1,
     unlockedByDefault: false,
-    description: "A festive December-only bake — catch him before the year runs out.",
+    description: "A festive December-only bake, catch him before the year runs out.",
     season: "december",
   },
 ];

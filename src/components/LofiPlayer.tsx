@@ -1,5 +1,6 @@
 import { useState, type CSSProperties } from "react";
 import { useLofiPlayer } from "../context/LofiPlayerContext";
+import { useDraggablePanel } from "../hooks/useDraggablePanel";
 
 /**
  * Compact, keyboard-accessible ambient-sound player: pick a pack (lo-fi, rain,
@@ -24,13 +25,27 @@ export function LofiPlayer() {
   // On narrow screens the player collapses to a floating note button so it no
   // longer overlaps the bottom nav / top bar; tapping it reveals the panel.
   const [open, setOpen] = useState(false);
+  const { nodeRef, position, isDragging, resetPosition, handleProps } =
+    useDraggablePanel("procrastibaker.lofiPosition");
 
   if (!available) {
     return null;
   }
 
+  // Until the user drags it, the panel keeps its CSS-defined corner. Once moved,
+  // switch to explicit coordinates and release the default anchoring.
+  const dockStyle: CSSProperties | undefined = position
+    ? { left: position.x, top: position.y, right: "auto", bottom: "auto" }
+    : undefined;
+
   return (
-    <div className={`lofi-dock${open ? " is-open" : ""}`}>
+    <div
+      className={`lofi-dock${open ? " is-open" : ""}${
+        isDragging ? " is-dragging" : ""
+      }${position ? " is-floating" : ""}`}
+      ref={nodeRef}
+      style={dockStyle}
+    >
       <button
         aria-expanded={open}
         aria-label={open ? "Hide sound player" : "Show sound player"}
@@ -45,6 +60,17 @@ export function LofiPlayer() {
       </button>
 
       <section className="lofi-player" aria-label="Ambient sound player">
+        <div
+          aria-label="Drag to move the sound player. Double click to reset its position."
+          className="lofi-player__grip"
+          onDoubleClick={resetPosition}
+          role="separator"
+          title="Drag to move"
+          {...handleProps}
+        >
+          <i aria-hidden="true" className="fa-solid fa-grip-lines" />
+        </div>
+
         <div className="lofi-player__packs" role="group" aria-label="Sound pack">
         {packs.map((option) => (
           <button

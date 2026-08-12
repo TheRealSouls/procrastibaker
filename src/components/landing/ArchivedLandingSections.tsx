@@ -3,7 +3,7 @@
  *
  * These were removed from the live landing page (`src/pages/HomeView.tsx`) on
  * 2026-06-15 because they were not needed for now. They are preserved here so
- * they can be dropped back in later without rewriting them — import the section
+ * they can be dropped back in later without rewriting them, import the section
  * component into HomeView and render it where the others live. The supporting
  * CSS (`.landing-section--metrics`, `.landing-metric-*`, `.landing-disclaimer`,
  * `.landing-section--testimonials`, `.landing-marquee*`, `.landing-stars`,
