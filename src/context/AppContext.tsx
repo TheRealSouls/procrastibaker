@@ -840,6 +840,21 @@ function getGoogleLoginErrorMessage(error: unknown) {
     return "Firebase Authentication may not be enabled, or the Google sign-in provider may not be enabled in Firebase Console. Google login failed. Please try again.";
   }
 
+  // Fires when the site is served from a domain that is not on the Auth
+  // allowlist. Name the exact domain so the fix is obvious.
+  if (code === "auth/unauthorized-domain") {
+    const host = typeof window !== "undefined" ? window.location.hostname : "this domain";
+    return `Google sign-in is not allowed from ${host}. Add it in Firebase Console under Authentication, Settings, Authorized domains.`;
+  }
+
+  if (code === "auth/popup-blocked") {
+    return "Your browser blocked the sign-in popup. Allow popups for this site, then try again.";
+  }
+
+  if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+    return "Sign-in was cancelled.";
+  }
+
   return "Google login failed. Please try again.";
 }
 

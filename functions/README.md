@@ -31,6 +31,14 @@ firebase deploy --only functions
 firebase deploy --only firestore:rules   # pushTokens + reminderSettings rules
 ```
 
+## Authorized domains (web sign-in)
+Firebase only auto-authorizes `<project-id>.web.app` and
+`<project-id>.firebaseapp.com`. This project deploys hosting to the **named** site
+`procrastibaker-d3c13-40511`, so **`procrastibaker-d3c13-40511.web.app` must be added
+by hand** under Authentication, Settings, Authorized domains. Without it Google
+sign-in fails with `auth/unauthorized-domain`. The same applies to any custom domain
+and to the reCAPTCHA v3 key used by App Check, which has its own domain allowlist.
+
 ## Notes
 - Only **native** (Android) clients register an FCM token today, so pushes reach the
   installed app; web users still get the in-app gift inbox and the local browser

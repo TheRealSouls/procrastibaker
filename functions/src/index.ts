@@ -1,10 +1,15 @@
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+import { setGlobalOptions } from "firebase-functions/v2";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { logger } from "firebase-functions";
 import { pastryName } from "./pastryNames";
 import { sendToUser } from "./push";
+
+// Hard ceiling on concurrent instances. Both functions are tiny and low traffic,
+// so this costs nothing in practice but caps the bill if something ever loops.
+setGlobalOptions({ maxInstances: 5, region: "europe-west1" });
 
 initializeApp();
 
