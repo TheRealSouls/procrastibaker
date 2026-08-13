@@ -37,6 +37,47 @@ Then in Android Studio:
 The app launches. **Google sign-in and push notifications will not work yet.** That is
 expected until Part 2.
 
+### If `./gradlew` fails from the terminal
+
+Android Studio's **Run** button uses its own bundled JDK, so it usually just works.
+Running `./gradlew` yourself uses whatever `java` is on your PATH, which is where these
+two bite. Both are fixed in `C:/Users/<you>/.gradle/gradle.properties`, a user-level
+file outside the repo. Delete it to undo.
+
+**1. "Dependency requires at least JVM runtime version 11. This build uses a Java 8 JVM."**
+
+An old Java is on your PATH. Point Gradle at the JDK that ships with Android Studio:
+```properties
+org.gradle.java.home=C:/Program Files/Android/Android Studio/jbr
+```
+
+**2. "PKIX path building failed: unable to find valid certification path"**
+
+Antivirus HTTPS scanning (Avast, Kaspersky, ESET and friends) intercepts TLS and
+re-signs it with its own root certificate. Node is usually told to trust it, which is
+why `npm install` works, but **Java keeps a separate trust store** and rejects every
+download.
+
+Confirm it by checking who issued the certificate you actually receive:
+```bash
+echo | openssl s_client -connect repo.maven.apache.org:443 \
+  -servername repo.maven.apache.org 2>/dev/null | grep "i:"
+```
+If the issuer is your antivirus, add its root to a copy of the JDK trust store (no
+admin rights needed):
+```bash
+cp "/c/Program Files/Android/Android Studio/jbr/lib/security/cacerts" ~/.gradle/cacerts-avast
+"/c/Program Files/Android/Android Studio/jbr/bin/keytool" -importcert \
+  -alias avast-web-shield \
+  -file "/c/ProgramData/Avast Software/Avast/wscert.pem" \
+  -keystore ~/.gradle/cacerts-avast -storepass changeit -noprompt
+```
+then tell Gradle to use it:
+```properties
+org.gradle.jvmargs=-Xmx2048m -Djavax.net.ssl.trustStore=C:/Users/<you>/.gradle/cacerts-avast -Djavax.net.ssl.trustStorePassword=changeit
+```
+Turning off the antivirus HTTPS scanning also works, but this keeps it on.
+
 ### Everyday loop
 After changing web code, re-run `npm run cap:android`, or just:
 ```bash
