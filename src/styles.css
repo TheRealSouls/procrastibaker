@@ -223,6 +223,10 @@ label,
   display: flex;
   gap: 0.75rem;
   align-items: center;
+  /* The sidebar is a flex column, so without this the brand is the first thing
+     squeezed when the window is short. Combined with its overflow: hidden that
+     clipped the logo down to a thin horizontal band. */
+  flex-shrink: 0;
   padding: 0.75rem;
   margin-bottom: 1rem;
   border: 1px solid var(--color-line);
@@ -250,6 +254,7 @@ label,
   display: block;
   width: 42px;
   height: 42px;
+  flex-shrink: 0;
   border-radius: 10px;
   object-fit: contain;
   padding: 6px;
@@ -261,6 +266,15 @@ label,
 .brand strong,
 .brand small {
   display: block;
+}
+
+/* Keep the sidebar's fixed chrome at its natural size on short windows so the
+   column scrolls (see .sidebar overflow-y) instead of squashing its children. */
+.sidebar > .app-nav,
+.sidebar-account,
+.sidebar-sign-out,
+.sidebar-github {
+  flex-shrink: 0;
 }
 
 .brand small {
@@ -4468,9 +4482,24 @@ button:disabled,
   opacity: 1;
 }
 
-/* The floating note toggle is mobile-only; on desktop the panel is always
-   visible and the toggle stays hidden. */
+/* The player can be minimised to this circular note button at any screen size.
+   Collapsed, the button is all that remains on screen. */
 .lofi-dock__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border: 1px solid var(--color-caramel);
+  border-radius: 50%;
+  background: var(--color-honey);
+  color: var(--color-soft-white);
+  box-shadow: var(--shadow-card);
+  font-size: 1.1rem;
+  cursor: var(--cursor-interactive);
+}
+
+.lofi-dock:not(.is-open) .lofi-player {
   display: none;
 }
 
@@ -4677,28 +4706,8 @@ button:disabled,
     gap: 8px;
   }
 
-  .lofi-dock__toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 52px;
-    height: 52px;
-    border: 1px solid var(--color-caramel);
-    border-radius: 50%;
-    background: var(--color-honey);
-    color: var(--color-soft-white);
-    box-shadow: var(--shadow-card);
-    font-size: 1.1rem;
-    cursor: var(--cursor-interactive);
-  }
-
   .lofi-player {
-    display: none;
     width: min(300px, calc(100vw - 24px));
-  }
-
-  .lofi-dock.is-open .lofi-player {
-    display: flex;
   }
 }
 
@@ -4872,8 +4881,12 @@ button:disabled,
   background: var(--color-caramel);
 }
 
+/* A scale() transform grows the scrollable overflow area, so hovering a cell
+   made the scroll container flash a horizontal scrollbar. A box-shadow ring is
+   ink overflow only, so it highlights the cell without changing scroll width. */
 .focus-heatmap__grid .focus-heatmap__cell:hover {
-  transform: scale(1.18);
+  box-shadow: 0 0 0 2px var(--color-cocoa);
+  filter: brightness(1.08);
 }
 
 .focus-heatmap__grid .focus-heatmap__cell:focus-visible {

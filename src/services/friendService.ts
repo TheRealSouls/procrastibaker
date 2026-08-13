@@ -85,6 +85,16 @@ export async function ensureUsernameClaim(
 
     if (!snapshot.exists()) {
       await setDoc(ref, { uid });
+      return;
+    }
+
+    if (snapshot.data().uid !== uid) {
+      // The name is held by someone else. That is usually legitimate, but it can
+      // also be a claim orphaned by a deleted account, which would otherwise
+      // reserve the name for good and send friend requests to a dead uid. The
+      // rules only permit a takeover when the previous owner's profile is gone,
+      // so attempting it is safe: a live owner simply denies the write.
+      await setDoc(ref, { uid });
     }
   } catch (error) {
     // Name taken by another user, or offline, discovery just won't include us.

@@ -24,7 +24,7 @@ import { isNativeApp } from "./capacitor";
 // registered in the Firebase App Check console only, never in the client.
 const recaptchaV3SiteKey =
   import.meta.env.VITE_RECAPTCHA_V3_SITE_KEY ??
-  "6Ldb-yAtAAAAAGNep5-U-umjrdTucKlS6m_bH8Ni";
+  "6LfiHoQtAAAAAIZcnMFJuSktS6y8grnaiJi9MXLM";
 
 const firebaseEnvKeys = [
   "VITE_FIREBASE_API_KEY",

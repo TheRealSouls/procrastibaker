@@ -262,6 +262,14 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.resource.data.keys().hasOnly(['uid'])
         && request.resource.data.uid == request.auth.uid;
+      // A claim whose owner no longer has a profile is orphaned (their account
+      // was deleted). Without this the name stays reserved forever and friend
+      // requests resolve to a dead uid. Uniqueness still holds: a claim with a
+      // live owner can never be taken over.
+      allow update: if request.auth != null
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid
+        && !exists(/databases/$(database)/documents/users/$(resource.data.uid));
       allow delete: if request.auth != null
         && resource.data.uid == request.auth.uid;
     }

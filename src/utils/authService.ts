@@ -16,6 +16,7 @@ import {
 import type { User } from "../types";
 import { loadAppState } from "./appStorage";
 import { isNativeApp } from "./capacitor";
+import { sanitizeUsername } from "./username";
 import {
   getFirebaseAuth,
   getOptionalFirebaseAuth,
@@ -198,9 +199,11 @@ export function mapFirebaseUserToAppUser(
 
   return normalizeAppUser({
     uid: firebaseUser.uid,
+    // Google hands us a full name ("Matas Roda"); usernames allow no spaces, so
+    // fall through to the email prefix if nothing usable survives sanitising.
     username:
-      firebaseUser.displayName?.trim() ||
-      fallbackName ||
+      sanitizeUsername(firebaseUser.displayName ?? "") ||
+      sanitizeUsername(fallbackName) ||
       existingUser?.username ||
       "Student",
     email,
@@ -216,7 +219,7 @@ function getAuthProvider(firebaseUser: FirebaseUser): User["authProvider"] {
 }
 
 function normalizeAppUser(user: UserInput): User {
-  const username = user.username.trim().slice(0, 32) || "Student";
+  const username = sanitizeUsername(user.username) || "Student";
   const email = user.email.trim().slice(0, 80);
   const uid = user.uid?.trim().slice(0, 128);
 

@@ -14,6 +14,7 @@ import type { AudioSettings, User } from "../types";
 import { loadAppState } from "../utils/appStorage";
 import { getOptionalFirestore } from "../utils/firebase";
 import { normalizeGiftablePastries } from "../utils/giftableInventory";
+import { sanitizeUsername } from "../utils/username";
 import { MAX_FREEZES } from "../utils/streakUtils";
 
 export type UserProfile = {
@@ -97,7 +98,7 @@ export async function createUserProfileIfMissing(user: User) {
       : pastries[0].id;
     const unlockedPastryIds = localState.unlockedPastryIds.filter(isPastryId);
     const profile = {
-      username: normalizeText(user.username, 32) || "Student",
+      username: sanitizeUsername(user.username) || "Student",
       email: normalizeText(user.email, 80),
       coins: Math.max(0, Math.floor(localState.user?.coins ?? user.coins)),
       selectedPastryId,
@@ -239,7 +240,9 @@ export async function changeUsername(
   current: Pick<UserProfile, "username" | "usernameChangedAt">,
 ): Promise<UsernameChangeResult> {
   const firestore = getOptionalFirestore();
-  const name = normalizeText(rawName, 32);
+  // Spaces and symbols are stripped rather than rejected, so a name pasted from
+  // elsewhere still resolves to something claimable.
+  const name = sanitizeUsername(rawName);
 
   if (!firestore || !uid.trim() || !name) {
     return { status: "error" };
@@ -334,9 +337,11 @@ function normalizeUserProfile(
 
   return {
     uid,
+    // Sanitised on read too, so accounts created before usernames were
+    // restricted converge to a searchable name instead of staying unfindable.
     username:
-      normalizeText(value.username, 32) ||
-      normalizeText(fallbackUser?.username, 32) ||
+      sanitizeUsername(normalizeText(value.username, 32)) ||
+      sanitizeUsername(normalizeText(fallbackUser?.username, 32)) ||
       "Student",
     email: normalizeText(value.email, 80) || normalizeText(fallbackUser?.email, 80),
     coins: Math.max(0, Math.floor(Number(value.coins) || 0)),
@@ -387,7 +392,7 @@ function normalizeUserProfileUpdates(updates: UserProfileUpdates) {
   const normalized: UserProfileUpdates = {};
 
   if (typeof updates.username === "string") {
-    const username = normalizeText(updates.username, 32);
+    const username = sanitizeUsername(updates.username);
 
     if (username) {
       normalized.username = username;

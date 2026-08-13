@@ -203,6 +203,7 @@
     "friendsHeading": "Your friends",
     "noFriends": "No friends yet, add someone by their username above.",
     "remove": "Remove",
+    "loadError": "We couldn't load your friends right now. Check your connection and refresh.",
     "outgoingPending_one": "{{count}} request pending.",
     "outgoingPending_other": "{{count}} requests pending."
   },

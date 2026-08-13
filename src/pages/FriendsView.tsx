@@ -48,8 +48,16 @@ export function FriendsView() {
   const { t } = useTranslation();
   const { appState, handleSendGift, handleClaimGift } = useApp();
   const user = appState.user;
-  const { friends, incoming, outgoing, friendEntries, addFriend, accept, remove } =
-    useFriends(user?.uid, user?.username);
+  const {
+    friends,
+    incoming,
+    outgoing,
+    friendEntries,
+    error: friendsError,
+    addFriend,
+    accept,
+    remove,
+  } = useFriends(user?.uid, user?.username);
   const { incomingGifts } = useGifts(user?.uid);
 
   const [target, setTarget] = useState("");
@@ -173,6 +181,14 @@ export function FriendsView() {
         <h1>{t("friends.title")}</h1>
         <p>{t("friends.intro")}</p>
       </section>
+
+      {/* A failed listener used to leave the lists silently empty, which reads
+          identically to simply having no friends yet. */}
+      {friendsError && (
+        <p className="auth-error" role="alert">
+          {t("friends.loadError")}
+        </p>
+      )}
 
       <section className="page-card">
         <h2>{t("friends.addHeading")}</h2>

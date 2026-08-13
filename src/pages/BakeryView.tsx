@@ -3,6 +3,7 @@ import { EmptyState } from "../components/EmptyState";
 import { PastryVisual } from "../components/PastryVisual";
 import { SessionCard } from "../components/SessionCard";
 import croissantIcon from "../media/sprites/icon.png";
+import trashIcon from "../media/sprites/trash.png";
 import type { AppState } from "../types";
 import { formatMinutes } from "../utils/sessionUtils";
 import { getPastryCounts } from "../utils/statsUtils";
@@ -101,7 +102,7 @@ export function BakeryView({ state }: BakeryViewProps) {
         </div>
 
         {state.expiredSessions.length === 0 ? (
-          <EmptyState compact icon={"\u{1F9FA}"}>
+          <EmptyState compact icon={"\u{1F9FA}"} iconSrc={trashIcon}>
             {t("bakery.expiredEmpty")}
           </EmptyState>
         ) : (

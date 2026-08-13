@@ -1,6 +1,8 @@
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { useLofiPlayer } from "../context/LofiPlayerContext";
 import { useDraggablePanel } from "../hooks/useDraggablePanel";
+
+const OPEN_STORAGE_KEY = "procrastibaker.lofiOpen";
 
 /**
  * Compact, keyboard-accessible ambient-sound player: pick a pack (lo-fi, rain,
@@ -22,9 +24,23 @@ export function LofiPlayer() {
     setVolume,
     toggleMute,
   } = useLofiPlayer();
-  // On narrow screens the player collapses to a floating note button so it no
-  // longer overlaps the bottom nav / top bar; tapping it reveals the panel.
-  const [open, setOpen] = useState(false);
+  // The player can be minimised to a floating note button at any size. Starts
+  // expanded, and the choice is remembered between visits.
+  const [open, setOpen] = useState(() => {
+    try {
+      return localStorage.getItem(OPEN_STORAGE_KEY) !== "false";
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(OPEN_STORAGE_KEY, String(open));
+    } catch {
+      // Storage unavailable; the choice just won't persist.
+    }
+  }, [open]);
   const { nodeRef, position, isDragging, resetPosition, handleProps } =
     useDraggablePanel("procrastibaker.lofiPosition");
 
@@ -48,9 +64,10 @@ export function LofiPlayer() {
     >
       <button
         aria-expanded={open}
-        aria-label={open ? "Hide sound player" : "Show sound player"}
+        aria-label={open ? "Minimise sound player" : "Show sound player"}
         className="lofi-dock__toggle"
         onClick={() => setOpen((value) => !value)}
+        title={open ? "Minimise sound player" : "Show sound player"}
         type="button"
       >
         <i
