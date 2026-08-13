@@ -22,10 +22,16 @@ export function AccountView() {
     appState,
     handlePasswordReset,
     handleDeleteAccount,
+    handleResendVerification,
+    handleRefreshVerification,
     isAuthLoading,
     authNotice,
     authError,
   } = useApp();
+  const [verifyStatus, setVerifyStatus] = useState<
+    "idle" | "sending" | "sent" | "failed" | "checking" | "still-unverified"
+  >("idle");
+  const [verifyMessage, setVerifyMessage] = useState("");
   const user = appState.user;
   const isEmailUser = user?.authProvider === "email";
 
@@ -39,6 +45,36 @@ export function AccountView() {
 
   if (!user) {
     return null;
+  }
+
+  async function resendVerification() {
+    setVerifyStatus("sending");
+    setVerifyMessage("");
+    const result = await handleResendVerification();
+
+    if (result.ok) {
+      setVerifyStatus("sent");
+      setVerifyMessage(t("account.emailVerifySent"));
+      return;
+    }
+
+    setVerifyStatus("failed");
+    setVerifyMessage(result.message ?? t("account.emailVerifyFailed"));
+  }
+
+  async function refreshVerification() {
+    setVerifyStatus("checking");
+    setVerifyMessage("");
+    const verified = await handleRefreshVerification();
+
+    // When it succeeds the pill flips to verified on its own, so only the
+    // still-unverified case needs saying out loud.
+    if (!verified) {
+      setVerifyStatus("still-unverified");
+      setVerifyMessage(t("account.emailVerifyStillPending"));
+    } else {
+      setVerifyStatus("idle");
+    }
   }
 
   async function handleExport() {
@@ -116,7 +152,29 @@ export function AccountView() {
           </div>
           <div>
             <dt>{t("account.email")}</dt>
-            <dd>{user.email || ", "}</dd>
+            <dd>{user.email || t("account.emailNotSet")}</dd>
+          </div>
+          <div>
+            <dt>{t("account.emailVerifiedLabel")}</dt>
+            <dd>
+              <span
+                className={`verify-pill${
+                  user.emailVerified ? " is-verified" : " is-unverified"
+                }`}
+              >
+                <i
+                  aria-hidden="true"
+                  className={
+                    user.emailVerified
+                      ? "fa-solid fa-circle-check"
+                      : "fa-solid fa-circle-exclamation"
+                  }
+                />
+                {user.emailVerified
+                  ? t("account.emailVerifiedYes")
+                  : t("account.emailVerifiedNo")}
+              </span>
+            </dd>
           </div>
           <div>
             <dt>{t("account.signInMethod")}</dt>
@@ -125,6 +183,45 @@ export function AccountView() {
             </dd>
           </div>
         </dl>
+
+        {isEmailUser && !user.emailVerified && (
+          <div className="account-verify">
+            <p className="field-hint">{t("account.emailVerifyBody")}</p>
+            <div className="account-verify__actions">
+              <button
+                className="button"
+                disabled={verifyStatus === "sending"}
+                onClick={resendVerification}
+                type="button"
+              >
+                {verifyStatus === "sending"
+                  ? t("account.emailVerifySending")
+                  : t("account.emailVerifySend")}
+              </button>
+              <button
+                className="button"
+                disabled={verifyStatus === "checking"}
+                onClick={refreshVerification}
+                type="button"
+              >
+                {verifyStatus === "checking"
+                  ? t("account.emailVerifyChecking")
+                  : t("account.emailVerifyRefresh")}
+              </button>
+            </div>
+            {verifyMessage && (
+              <p
+                className={
+                  verifyStatus === "sent" ? "auth-notice" : "auth-error"
+                }
+                role="status"
+              >
+                {verifyMessage}
+              </p>
+            )}
+          </div>
+        )}
+
         <p className="account-hint">
           {t("account.changeUsernamePrefix")}{" "}
           <Link to="/dashboard">{t("account.dashboardWord")}</Link>.

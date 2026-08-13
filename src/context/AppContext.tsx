@@ -42,7 +42,7 @@ import {
 } from "../services/giftService";
 import { addGiftable, takeGiftable } from "../utils/giftableInventory";
 import { initPushNotifications } from "../services/pushNotifications";
-import { DAILY_GOAL_REWARD_COINS } from "../services/userProfileService";
+import { dailyGoalRewardCoins } from "../services/userProfileService";
 import {
   focusMinutesOnDate,
   totalFocusMinutes,
@@ -573,7 +573,7 @@ export function AppProvider() {
         await updateCoins({
           delta:
             calculateCoins(durationMinutes) +
-            (earnedGoalBonus ? DAILY_GOAL_REWARD_COINS : 0),
+            (earnedGoalBonus ? dailyGoalRewardCoins(goalMinutes) : 0),
         });
 
         if (earnedGoalBonus) {

@@ -89,6 +89,26 @@ async function refsFromQuery(
   }
 }
 
+// Deletes each ref on its own so one rejection cannot take the rest with it.
+// Used for the satellite collections, whose absence from an older deployed
+// ruleset must not stand between a user and deleting their account.
+async function deleteQuietly(
+  firestore: Firestore,
+  refs: DocumentReference[],
+): Promise<void> {
+  await Promise.all(
+    refs.map(async (ref) => {
+      try {
+        const batch = writeBatch(firestore);
+        batch.delete(ref);
+        await batch.commit();
+      } catch (error) {
+        console.debug(`Deleting ${ref.path} skipped`, error);
+      }
+    }),
+  );
+}
+
 // Best-effort release of the global `usernames/{lowercase}` claim. Only deletes a
 // claim this uid actually owns, so a name since taken by somebody else is left
 // alone. Never throws: an unreleased claim must not fail the account deletion.
@@ -159,9 +179,11 @@ export async function deleteAllUserData(uid: string): Promise<boolean> {
       refsFromQuery(firestore, "gifts", "toUid", uid),
     ]);
 
-    const refs: DocumentReference[] = [
-      ...sessionsSnap.docs.map((item) => item.ref),
-      ...tagsSnap.docs.map((item) => item.ref),
+    // Satellite docs are cleared first and independently. A batch is atomic, so
+    // bundling them with the profile meant a single collection missing from the
+    // deployed ruleset (its delete hitting the catch-all deny) failed the whole
+    // commit and left the account undeletable.
+    await deleteQuietly(firestore, [
       ...sentRequests,
       ...receivedRequests,
       ...sentGifts,
@@ -169,8 +191,13 @@ export async function deleteAllUserData(uid: string): Promise<boolean> {
       doc(firestore, "leaderboardStats", uid),
       doc(firestore, "pushTokens", uid),
       doc(firestore, "reminderSettings", uid),
-      // The profile itself goes last so a partial failure still leaves the
-      // account recognisable.
+    ]);
+
+    // The user's own data must genuinely go, so this part is not best-effort.
+    // The profile is last so a partial failure still leaves the account usable.
+    const refs: DocumentReference[] = [
+      ...sessionsSnap.docs.map((item) => item.ref),
+      ...tagsSnap.docs.map((item) => item.ref),
       doc(firestore, "users", uid),
     ];
 

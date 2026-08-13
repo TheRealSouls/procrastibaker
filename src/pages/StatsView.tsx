@@ -8,6 +8,7 @@ import { StatCard } from "../components/StatCard";
 import { TagDonutChart } from "../components/TagDonutChart";
 import { WeeklyTrendChart } from "../components/WeeklyTrendChart";
 import type { AppState } from "../types";
+import { isSeasonActive } from "../utils/season";
 import { formatMinutes } from "../utils/sessionUtils";
 import {
   getCompletionRate,
@@ -34,6 +35,11 @@ export function StatsView({ state }: StatsViewProps) {
     0,
   );
   const pastryCounts = getPastryCounts(state.completedSessions);
+  // A seasonal pastry that is out of season and has never been baked cannot be
+  // obtained right now, so listing it at zero just looks like a missing item.
+  const visiblePastryCounts = pastryCounts.filter(
+    (entry) => entry.count > 0 || !entry.season || isSeasonActive(entry.season),
+  );
   const totalSessions =
     state.completedSessions.length + state.expiredSessions.length;
   const completionRate = getCompletionRate(
@@ -174,8 +180,13 @@ export function StatsView({ state }: StatsViewProps) {
           </span>
         </div>
         <div className="pastry-breakdown-grid">
-          {pastryCounts.map((entry) => (
-            <article className="pastry-breakdown-card" key={entry.id}>
+          {visiblePastryCounts.map((entry) => (
+            <article
+              className={`pastry-breakdown-card${
+                entry.season ? " is-seasonal" : ""
+              }`}
+              key={entry.id}
+            >
               <PastryVisual
                 className="pastry-breakdown-card__visual"
                 emoji={entry.emoji}
@@ -185,6 +196,11 @@ export function StatsView({ state }: StatsViewProps) {
               <div>
                 <h3>{entry.name}</h3>
                 <strong>{entry.count}</strong>
+                {entry.season && (
+                  <span className="seasonal-tag">
+                    {t(`stats.season_${entry.season}`)}
+                  </span>
+                )}
               </div>
             </article>
           ))}

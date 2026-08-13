@@ -21,13 +21,18 @@ export function getSeason(date: Date = new Date()): Season | null {
   return SEASON_BY_MONTH[date.getMonth()] ?? null;
 }
 
+/** True while the given seasonal window is the current one. */
+export function isSeasonActive(season: Season, date: Date = new Date()): boolean {
+  return getSeason(date) === season;
+}
+
 // A pastry is in season if it has no seasonal restriction, or the restriction
 // matches the current season.
 export function isPastryInSeason(
   pastry: Pastry,
   date: Date = new Date(),
 ): boolean {
-  return !pastry.season || pastry.season === getSeason(date);
+  return !pastry.season || isSeasonActive(pastry.season, date);
 }
 
 // A pastry should be shown in the catalog (shop / picker) when it is in season,

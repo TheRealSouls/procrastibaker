@@ -1,6 +1,6 @@
 import { pastries } from "../data/pastries";
 import { DEFAULT_TAGS, fallbackTagColor, findTagById } from "../data/tags";
-import type { StudySession, StudyTag } from "../types";
+import type { Season, StudySession, StudyTag } from "../types";
 import { todayKey } from "./streakUtils";
 
 const SHORT_MONTHS = [
@@ -322,6 +322,9 @@ export type PastryCount = {
   id: string;
   name: string;
   totalMinutes: number;
+  // Set for limited-run pastries, so the UI can badge them and hide the ones
+  // that are out of season and have never been baked.
+  season?: Season;
 };
 
 export type TagMinuteTotal = {
@@ -380,6 +383,7 @@ export function getPastryCounts(sessions: StudySession[]): PastryCount[] {
         id: pastry.id,
         name: pastry.name,
         totalMinutes: 0,
+        ...(pastry.season ? { season: pastry.season } : {}),
       },
     ),
   );

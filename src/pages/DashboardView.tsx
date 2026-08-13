@@ -7,7 +7,7 @@ import { StatCard } from "../components/StatCard";
 import { StreakBadge } from "../components/StreakBadge";
 import { pastries } from "../data/pastries";
 import {
-  DAILY_GOAL_REWARD_COINS,
+  dailyGoalRewardCoins,
   MAX_DAILY_GOAL_MINUTES,
   MIN_DAILY_GOAL_MINUTES,
   USERNAME_COOLDOWN_MS,
@@ -87,6 +87,11 @@ export function DashboardView({
   const todayMinutes = focusMinutesOnDate(state.completedSessions);
   const dailyGoalMet = todayMinutes >= dailyGoalMinutes;
   const dailyGoalRemaining = Math.max(0, dailyGoalMinutes - todayMinutes);
+  // The bonus is once per day, so once banked the card must stop advertising it.
+  // Otherwise lowering the goal below today's total looks like a fresh payout.
+  const dailyGoalClaimed =
+    (state.user?.dailyGoalRewardedDate ?? "") === todayKey();
+  const dailyGoalReward = dailyGoalRewardCoins(dailyGoalMinutes);
 
   function adjustDailyGoal(delta: number) {
     const next = Math.min(
@@ -270,8 +275,10 @@ export function DashboardView({
           <div>
             <h2 id="daily-goal-heading">{t("dashboard.dailyGoalHeading")}</h2>
             <p>
-              {dailyGoalMet
-                ? t("dashboard.dailyGoalMet", { coins: DAILY_GOAL_REWARD_COINS })
+              {dailyGoalClaimed
+                ? t("dashboard.dailyGoalClaimed")
+                : dailyGoalMet
+                ? t("dashboard.dailyGoalMet", { coins: dailyGoalReward })
                 : t("dashboard.dailyGoalRemaining", {
                     remaining: formatMinutes(dailyGoalRemaining),
                   })}
@@ -303,6 +310,10 @@ export function DashboardView({
             </button>
           </div>
         </div>
+        <p className="field-hint daily-goal-card__hint">
+          {t("dashboard.dailyGoalRewardHint")}{" "}
+          {t("dashboard.dailyGoalRewardValue", { count: dailyGoalReward })}
+        </p>
         <ProgressBar
           ariaLabel={t("dashboard.dailyGoalAria")}
           className="bar-track daily-goal-card__bar"

@@ -6,6 +6,7 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
+  type Firestore,
   type Timestamp,
   type Unsubscribe,
 } from "firebase/firestore";
@@ -14,7 +15,7 @@ import type { AudioSettings, User } from "../types";
 import { loadAppState } from "../utils/appStorage";
 import { getOptionalFirestore } from "../utils/firebase";
 import { normalizeGiftablePastries } from "../utils/giftableInventory";
-import { sanitizeUsername } from "../utils/username";
+import { sanitizeUsername, USERNAME_MAX_LENGTH } from "../utils/username";
 import { MAX_FREEZES } from "../utils/streakUtils";
 
 export type UserProfile = {
@@ -46,6 +47,27 @@ export const DEFAULT_DAILY_GOAL_MINUTES = 60;
 export const MIN_DAILY_GOAL_MINUTES = 10;
 export const MAX_DAILY_GOAL_MINUTES = 600;
 export const DAILY_GOAL_REWARD_COINS = 25;
+export const MIN_DAILY_GOAL_REWARD_COINS = 5;
+export const MAX_DAILY_GOAL_REWARD_COINS = 60;
+
+/**
+ * Coins awarded for meeting the daily goal, scaled by how ambitious that goal is.
+ *
+ * A flat bonus made the lowest possible goal strictly optimal: the same reward
+ * for a tenth of the work. Scaling it against the default keeps the choice
+ * honest, since an easier goal pays proportionally less.
+ */
+export function dailyGoalRewardCoins(goalMinutes: number): number {
+  const goal = clampDailyGoal(goalMinutes);
+  const scaled = Math.round(
+    (goal / DEFAULT_DAILY_GOAL_MINUTES) * DAILY_GOAL_REWARD_COINS,
+  );
+
+  return Math.min(
+    MAX_DAILY_GOAL_REWARD_COINS,
+    Math.max(MIN_DAILY_GOAL_REWARD_COINS, scaled),
+  );
+}
 
 export type UsernameChangeResult =
   | { status: "ok"; username: string }
@@ -98,7 +120,8 @@ export async function createUserProfileIfMissing(user: User) {
       : pastries[0].id;
     const unlockedPastryIds = localState.unlockedPastryIds.filter(isPastryId);
     const profile = {
-      username: sanitizeUsername(user.username) || "Student",
+      // Reserved up front so two accounts can never share a name.
+      username: await claimAvailableUsername(firestore, uid, user.username),
       email: normalizeText(user.email, 80),
       coins: Math.max(0, Math.floor(localState.user?.coins ?? user.coins)),
       selectedPastryId,
@@ -224,6 +247,57 @@ export async function updateUserProfile(
     console.error("Firestore update user profile failed", error);
     return false;
   }
+}
+
+// How many numbered variants to try before falling back to a random suffix.
+const USERNAME_SUFFIX_ATTEMPTS = 30;
+
+/**
+ * Reserves a free username for a brand new account, appending a number when the
+ * plain name is taken: MatasRoda, MatasRoda2, MatasRoda3 and so on.
+ *
+ * Two people called "John Smith" would otherwise both land on JohnSmith, which
+ * breaks friend lookup because it resolves a name to exactly one uid. The
+ * create-only rule on `usernames` is what actually decides the race: whoever
+ * commits first wins, and the loser's create throws and moves to the next
+ * number.
+ */
+async function claimAvailableUsername(
+  firestore: Firestore,
+  uid: string,
+  desired: string,
+): Promise<string> {
+  const root = sanitizeUsername(desired) || "Baker";
+
+  for (let attempt = 0; attempt < USERNAME_SUFFIX_ATTEMPTS; attempt += 1) {
+    const suffix = attempt === 0 ? "" : String(attempt + 1);
+    // Keep room for the digits so long names stay within the length limit.
+    const base = root.slice(0, USERNAME_MAX_LENGTH - suffix.length);
+    const candidate = `${base}${suffix}`;
+    const claimRef = doc(firestore, "usernames", candidate.toLowerCase());
+
+    try {
+      const existing = await getDoc(claimRef);
+
+      if (existing.exists()) {
+        // Already ours (a retried sign-in), so keep it.
+        if (existing.data().uid === uid) {
+          return candidate;
+        }
+        continue;
+      }
+
+      await setDoc(claimRef, { uid });
+      return candidate;
+    } catch (error) {
+      // Lost the race, or the claim is unreadable. Either way, try the next one.
+      console.debug(`Username ${candidate} unavailable`, error);
+    }
+  }
+
+  // Extremely unlikely. A random suffix beats handing out a duplicate.
+  const fallbackSuffix = String(Math.floor(Math.random() * 9000) + 1000);
+  return `${root.slice(0, USERNAME_MAX_LENGTH - fallbackSuffix.length)}${fallbackSuffix}`;
 }
 
 class UsernameTakenError extends Error {}

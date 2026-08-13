@@ -5,6 +5,10 @@ export type PanelPosition = { x: number; y: number };
 // Gap kept between a dragged panel and the viewport edges.
 const EDGE_MARGIN = 8;
 
+// Pixels a pointer must travel before the gesture counts as a drag rather than
+// a click. Keeps a draggable button clickable.
+const DRAG_THRESHOLD = 4;
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
@@ -46,6 +50,9 @@ export function useDraggablePanel(storageKey: string) {
     offsetX: number;
     offsetY: number;
   } | null>(null);
+  // Set once a drag travels far enough to count, so a handle that doubles as a
+  // button can tell a real drag from a click that wobbled a pixel.
+  const movedRef = useRef(false);
 
   // Keeps the panel fully on screen whatever the viewport size.
   const clampToViewport = useCallback((x: number, y: number): PanelPosition => {
@@ -73,9 +80,11 @@ export function useDraggablePanel(storageKey: string) {
       offsetX: event.clientX - rect.left,
       offsetY: event.clientY - rect.top,
     };
+    movedRef.current = false;
     event.currentTarget.setPointerCapture(event.pointerId);
     setIsDragging(true);
-    // Stops the gesture also scrolling the page or selecting text.
+    // Stops the gesture also scrolling the page or selecting text. The click
+    // event still fires afterwards, which is what lets the handle be a button.
     event.preventDefault();
   }, []);
 
@@ -87,9 +96,22 @@ export function useDraggablePanel(storageKey: string) {
         return;
       }
 
-      setPosition(
-        clampToViewport(event.clientX - drag.offsetX, event.clientY - drag.offsetY),
-      );
+      const nextX = event.clientX - drag.offsetX;
+      const nextY = event.clientY - drag.offsetY;
+
+      if (!movedRef.current) {
+        const node = nodeRef.current;
+        const rect = node?.getBoundingClientRect();
+
+        if (
+          rect &&
+          Math.abs(nextX - rect.left) + Math.abs(nextY - rect.top) >= DRAG_THRESHOLD
+        ) {
+          movedRef.current = true;
+        }
+      }
+
+      setPosition(clampToViewport(nextX, nextY));
     },
     [clampToViewport],
   );
@@ -152,6 +174,8 @@ export function useDraggablePanel(storageKey: string) {
     position,
     isDragging,
     resetPosition,
+    // Lets a click handler on a drag handle bail out after an actual drag.
+    wasDragged: () => movedRef.current,
     handleProps: {
       onPointerDown,
       onPointerMove,

@@ -42,7 +42,14 @@ export function PastryCard({
           pastryName={pastry.name}
         />
         <div>
-          <h2>{pastry.name}</h2>
+          <h2>
+            {pastry.name}
+            {pastry.season && (
+              <span className="seasonal-tag">
+                {t(`stats.season_${pastry.season}`)}
+              </span>
+            )}
+          </h2>
           <p>{pastry.description}</p>
         </div>
       </div>

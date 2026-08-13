@@ -311,7 +311,7 @@ export function FriendsView() {
                 {formatMinutes(row.weeklyMinutes)}
               </span>
               <span className="leaderboard__streak" aria-hidden="true">
-                {row.streakCount > 0 ? `🔥 ${row.streakCount}` : ", "}
+                {row.streakCount > 0 ? `🔥 ${row.streakCount}` : "·"}
               </span>
             </li>
           ))}

@@ -41,7 +41,7 @@ export function LofiPlayer() {
       // Storage unavailable; the choice just won't persist.
     }
   }, [open]);
-  const { nodeRef, position, isDragging, resetPosition, handleProps } =
+  const { nodeRef, position, isDragging, resetPosition, wasDragged, handleProps } =
     useDraggablePanel("procrastibaker.lofiPosition");
 
   if (!available) {
@@ -62,30 +62,50 @@ export function LofiPlayer() {
       ref={nodeRef}
       style={dockStyle}
     >
-      <button
-        aria-expanded={open}
-        aria-label={open ? "Minimise sound player" : "Show sound player"}
-        className="lofi-dock__toggle"
-        onClick={() => setOpen((value) => !value)}
-        title={open ? "Minimise sound player" : "Show sound player"}
-        type="button"
-      >
-        <i
-          aria-hidden="true"
-          className={open ? "fa-solid fa-xmark" : "fa-solid fa-music"}
-        />
-      </button>
-
-      <section className="lofi-player" aria-label="Ambient sound player">
-        <div
-          aria-label="Drag to move the sound player. Double click to reset its position."
-          className="lofi-player__grip"
+      {/* Collapsed: the bubble is both the restore button and the drag handle,
+          so the player can be repositioned without expanding it first. A drag
+          past the threshold suppresses the click. */}
+      {!open && (
+        <button
+          aria-expanded={false}
+          aria-label="Show sound player"
+          className="lofi-dock__toggle"
+          onClick={() => {
+            if (!wasDragged()) {
+              setOpen(true);
+            }
+          }}
           onDoubleClick={resetPosition}
-          role="separator"
-          title="Drag to move"
+          title="Show sound player. Drag to move."
+          type="button"
           {...handleProps}
         >
-          <i aria-hidden="true" className="fa-solid fa-grip-lines" />
+          <i aria-hidden="true" className="fa-solid fa-music" />
+        </button>
+      )}
+
+      <section className="lofi-player" aria-label="Ambient sound player">
+        <div className="lofi-player__header">
+          <div
+            aria-label="Drag to move the sound player. Double click to reset its position."
+            className="lofi-player__grip"
+            onDoubleClick={resetPosition}
+            role="separator"
+            title="Drag to move"
+            {...handleProps}
+          >
+            <i aria-hidden="true" className="fa-solid fa-grip-lines" />
+          </div>
+          <button
+            aria-expanded
+            aria-label="Minimise sound player"
+            className="lofi-player__close"
+            onClick={() => setOpen(false)}
+            title="Minimise sound player"
+            type="button"
+          >
+            <i aria-hidden="true" className="fa-solid fa-xmark" />
+          </button>
         </div>
 
         <div className="lofi-player__packs" role="group" aria-label="Sound pack">
