@@ -52,6 +52,11 @@ captures/
 # Comment next line if keeping position of elements in Navigation Editor is relevant for you
 .idea/navEditor.xml
 
+# Firebase config for the Android app. It holds no private keys (these values
+# ship inside every published APK), but each developer supplies their own, and
+# PLAY_STORE.md tells you to add it yourself.
+app/google-services.json
+
 # Android Studio project state. Regenerated on every open, and some of it is
 # machine-specific (deploymentTargetSelector records the device you last ran on),
 # so it only ever creates noisy diffs.
