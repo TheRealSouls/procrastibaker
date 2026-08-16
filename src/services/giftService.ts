@@ -22,6 +22,11 @@ export type Gift = {
   toUsername: string;
   pastryId: string;
   status: GiftStatus;
+  // Set by the recipient when they say thanks, then cleared from the sender's
+  // view once they have seen it. This is what carries the thanks back across
+  // accounts without needing a second collection.
+  thanked: boolean;
+  thanksSeen: boolean;
 };
 
 export type SendGiftResult = {
@@ -56,6 +61,8 @@ export async function createGift(
       toUsername: clip(toUsername, 32) || "Student",
       pastryId: clip(pastryId, 64),
       status: "unclaimed",
+      thanked: false,
+      thanksSeen: false,
       createdAt: serverTimestamp(),
     });
     return ref.id;
@@ -110,6 +117,68 @@ export async function markGiftClaimed(giftId: string): Promise<boolean> {
   }
 }
 
+/** Recipient says thanks. The sender picks this up on their next visit. */
+export async function thankForGift(giftId: string): Promise<boolean> {
+  const firestore = getOptionalFirestore();
+
+  if (!firestore || !giftId.trim()) {
+    return false;
+  }
+
+  try {
+    await updateDoc(doc(firestore, "gifts", giftId), { thanked: true });
+    return true;
+  } catch (error) {
+    console.error("Thank for gift failed", error);
+    return false;
+  }
+}
+
+/** Sender has seen the thanks, so it stops being announced. */
+export async function markThanksSeen(giftId: string): Promise<boolean> {
+  const firestore = getOptionalFirestore();
+
+  if (!firestore || !giftId.trim()) {
+    return false;
+  }
+
+  try {
+    await updateDoc(doc(firestore, "gifts", giftId), { thanksSeen: true });
+    return true;
+  } catch (error) {
+    console.error("Marking thanks seen failed", error);
+    return false;
+  }
+}
+
+/** Gifts this user sent, used to surface thanks coming back. */
+export function listenToSentGifts(
+  uid: string,
+  callback: (gifts: Gift[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  const firestore = getOptionalFirestore();
+
+  if (!firestore || !uid.trim()) {
+    return () => undefined;
+  }
+
+  return onSnapshot(
+    query(collection(firestore, "gifts"), where("fromUid", "==", uid)),
+    (snapshot) => {
+      callback(
+        snapshot.docs
+          .map((item) => normalizeGift(item.id, item.data()))
+          .filter((gift): gift is Gift => gift !== null),
+      );
+    },
+    (error) => {
+      console.error("Listen sent gifts failed", error);
+      onError?.(error);
+    },
+  );
+}
+
 export async function deleteGift(giftId: string): Promise<boolean> {
   const firestore = getOptionalFirestore();
 
@@ -146,5 +215,7 @@ function normalizeGift(id: string, value: Record<string, unknown>): Gift | null 
       typeof value.toUsername === "string" ? value.toUsername : "Student",
     pastryId: value.pastryId,
     status: value.status,
+    thanked: value.thanked === true,
+    thanksSeen: value.thanksSeen === true,
   };
 }

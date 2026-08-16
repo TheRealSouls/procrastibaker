@@ -236,7 +236,15 @@
     "claim": "Claim",
     "claiming": "Claiming...",
     "unlocked": "Unlocked {{pastry}}, added to your bakery!",
-    "gotStock": "Added a {{pastry}} to your bakery!"
+    "gotStock": "Added a {{pastry}} to your bakery!",
+    "alertTitle": "A pastry arrived!",
+    "alertBody": "{{name}} gifted you a {{pastry}}. Claim it to add it to your bakery.",
+    "sayThanks": "Claim and say thanks",
+    "justClaim": "Just claim it",
+    "thanksSent": "Thanks sent to {{name}}!",
+    "thanksTitle": "You got a thank you!",
+    "thanksBody": "{{name}} says thanks for the {{pastry}} you sent.",
+    "thanksClose": "Lovely"
   },
   "verify": {
     "title": "Verify your email",

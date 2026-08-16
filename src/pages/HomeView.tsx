@@ -310,8 +310,9 @@ export function HomeView({ onStart }: HomeViewProps) {
             <p className="landing-kicker">Open source</p>
             <h2>Procrastibaker is open source.</h2>
             <p>
-              The bakery is open to everyone. Otherwise, how would you even make
-              coins?
+              Procrastibaker was born in an overly posh Dublin coding programme
+              lol. The bakery is open to everyone. Otherwise, how would you even
+              make coins?
             </p>
             <a
               className="button primary landing-button landing-opensource__cta"

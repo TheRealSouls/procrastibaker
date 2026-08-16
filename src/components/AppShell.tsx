@@ -5,6 +5,7 @@ import { AppNav } from "./AppNav";
 import { CoinIcon } from "./CoinIcon";
 import { ConfirmationModal } from "./ConfirmationModal";
 import { EmailVerificationBanner } from "./EmailVerificationBanner";
+import { GiftAlertModal } from "./GiftAlertModal";
 import { LofiPlayer } from "./LofiPlayer";
 import { StreakBadge } from "./StreakBadge";
 import { useApp } from "../context/AppContext";
@@ -207,6 +208,9 @@ export function AppShell() {
       </main>
 
       <LofiPlayer />
+
+      {/* Announces incoming gifts and returning thanks, including on sign-in. */}
+      <GiftAlertModal />
 
       {showSignOutConfirm && (
         <ConfirmationModal

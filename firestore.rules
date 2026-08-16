@@ -200,8 +200,12 @@ service cloud.firestore {
           'toUsername',
           'pastryId',
           'status',
+          'thanked',
+          'thanksSeen',
           'createdAt'
         ])
+        && (!('thanked' in data) || data.thanked is bool)
+        && (!('thanksSeen' in data) || data.thanksSeen is bool)
         && data.fromUid is string
         && data.fromUid.size() <= 128
         && data.toUid is string
@@ -387,11 +391,22 @@ service cloud.firestore {
         && request.resource.data.status == 'unclaimed'
         && isAcceptedFriend(request.resource.data.toUid)
         && isGift();
+      // The recipient may claim it, and may say thanks. The sender may only mark
+      // that they have seen the thanks. Each side is limited to its own fields
+      // so neither can rewrite the gift itself.
       allow update: if request.auth != null
         && resource.data.toUid == request.auth.uid
         && resource.data.status == 'unclaimed'
         && request.resource.data.status == 'claimed'
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      allow update: if request.auth != null
+        && resource.data.toUid == request.auth.uid
+        && request.resource.data.thanked == true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['thanked']);
+      allow update: if request.auth != null
+        && resource.data.fromUid == request.auth.uid
+        && request.resource.data.thanksSeen == true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['thanksSeen']);
       allow delete: if request.auth != null
         && (resource.data.fromUid == request.auth.uid
           || resource.data.toUid == request.auth.uid);
