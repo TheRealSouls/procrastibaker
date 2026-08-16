@@ -41,8 +41,21 @@ export function LofiPlayer() {
       // Storage unavailable; the choice just won't persist.
     }
   }, [open]);
-  const { nodeRef, position, isDragging, resetPosition, wasDragged, handleProps } =
-    useDraggablePanel("procrastibaker.lofiPosition");
+  const {
+    nodeRef,
+    position,
+    isDragging,
+    resetPosition,
+    reclamp,
+    wasDragged,
+    handleProps,
+  } = useDraggablePanel("procrastibaker.lofiPosition");
+
+  // Expanding near a screen edge would otherwise push the panel out of view,
+  // since the dock keeps the corner it was dragged to and simply grows.
+  useEffect(() => {
+    reclamp();
+  }, [open, reclamp]);
 
   if (!available) {
     return null;

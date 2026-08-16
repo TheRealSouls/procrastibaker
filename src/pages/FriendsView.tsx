@@ -6,7 +6,8 @@ import { useGifts } from "../hooks/useGifts";
 import { pastries } from "../data/pastries";
 import { pastrySprites } from "../data/pastrySprites";
 import type { Gift } from "../services/giftService";
-import { giftableCount } from "../utils/giftableInventory";
+import { giftableEntries } from "../utils/giftableInventory";
+import fireSprite from "../media/sprites/fire.png";
 import { formatMinutes } from "../utils/sessionUtils";
 import {
   totalFocusMinutes,
@@ -70,13 +71,11 @@ export function FriendsView() {
   const [claimBusyId, setClaimBusyId] = useState("");
   const [claimNotice, setClaimNotice] = useState("");
 
-  // Pastry types you have baked stock of, most-stocked first.
+  // Derived from completed sessions plus the gift ledger, so every bake counts,
+  // including ones finished before gifting existed.
   const giftableList = useMemo(
-    () =>
-      Object.entries(appState.giftablePastries)
-        .filter(([, count]) => count > 0)
-        .sort((a, b) => b[1] - a[1]),
-    [appState.giftablePastries],
+    () => giftableEntries(appState.completedSessions, appState.giftablePastries),
+    [appState.completedSessions, appState.giftablePastries],
   );
 
   const currentWeek = weekKey();
@@ -311,7 +310,14 @@ export function FriendsView() {
                 {formatMinutes(row.weeklyMinutes)}
               </span>
               <span className="leaderboard__streak" aria-hidden="true">
-                {row.streakCount > 0 ? `🔥 ${row.streakCount}` : "·"}
+                {row.streakCount > 0 ? (
+                  <>
+                    <img alt="" className="streak-sprite" src={fireSprite} />
+                    {row.streakCount}
+                  </>
+                ) : (
+                  "·"
+                )}
               </span>
             </li>
           ))}
@@ -336,7 +342,7 @@ export function FriendsView() {
                     }}
                     type="button"
                   >
-                    🎁 {t("gifts.sendButton")}
+                    {t("gifts.sendButton")}
                   </button>
                   <button
                     className="button tag-delete-button"
@@ -392,7 +398,7 @@ export function FriendsView() {
                   <li key={id}>
                     <button
                       className="gift-picker__pastry"
-                      disabled={giftBusy || giftableCount(appState.giftablePastries, id) <= 0}
+                      disabled={giftBusy}
                       onClick={() => void handlePickGift(id)}
                       type="button"
                     >

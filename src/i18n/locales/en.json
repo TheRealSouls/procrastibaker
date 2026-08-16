@@ -31,6 +31,16 @@
     "signOutBakingConfirm": "Sign out and bin it",
     "signOutBakingCancel": "Keep baking"
   },
+  "todos": {
+    "heading": "To-do list",
+    "addLabel": "New task",
+    "placeholder": "What needs doing?",
+    "add": "Add",
+    "empty": "Nothing on the list. Add your first task above.",
+    "remaining_one": "{{count}} left",
+    "remaining_other": "{{count}} left",
+    "deleteAria": "Delete task: {{title}}"
+  },
   "streakBadge": {
     "aria_one": "{{count}} day streak",
     "aria_other": "{{count}} days streak"
@@ -101,8 +111,8 @@
     "usernameError": "Couldn't update your username. Please try again.",
     "usernameSaved": "Username updated!",
     "nudgeStart": "Finish a bake today to start your streak.",
-    "nudgeSafe": "You've baked today, your streak is safe. 🔥",
-    "nudgeKeep": "Bake today to keep your {{count}}-day streak alive. 🔥",
+    "nudgeSafe": "You've baked today, your streak is safe.",
+    "nudgeKeep": "Bake today to keep your {{count}}-day streak alive.",
     "nudgeFreeze": "Bake today and a streak freeze will save your run.",
     "nudgeCooled": "Your streak cooled off, finish a bake today to start a fresh one.",
     "dailyGoalHeading": "Today's goal",
@@ -113,7 +123,7 @@
     "dailyGoalRewardHint": "Bigger goals pay a bigger bonus.",
     "dailyGoalRewardValue_one": "This goal is worth {{count}} coin.",
     "dailyGoalRewardValue_other": "This goal is worth {{count}} coins.",
-    "dailyGoalMet": "Goal smashed! You earned a +{{coins}} coin bonus today. 🎉",
+    "dailyGoalMet": "Goal smashed! You earned a +{{coins}} coin bonus today.",
     "dailyGoalAria": "Today's focus goal progress",
     "dailyGoalDecrease": "Lower daily goal",
     "dailyGoalIncrease": "Raise daily goal"
@@ -217,12 +227,12 @@
     "pickIntro": "Pick one of the pastries you've baked to send. You earn a pastry each time you finish a focus session.",
     "noneBaked": "You haven't baked any pastries yet, finish a focus session to earn one to gift.",
     "sending": "Sending...",
-    "msgSent": "Gift sent! 🎁",
+    "msgSent": "Gift sent!",
     "msgNotFriend": "Couldn't send. You can only gift confirmed friends.",
     "msgNoStock": "You've run out of that pastry, bake more to keep gifting.",
     "msgError": "Something went wrong. Please try again.",
     "inboxHeading": "Your gifts",
-    "received": "{{from}} sent you a {{pastry}} 🎁",
+    "received": "{{from}} sent you a {{pastry}}",
     "claim": "Claim",
     "claiming": "Claiming...",
     "unlocked": "Unlocked {{pastry}}, added to your bakery!",

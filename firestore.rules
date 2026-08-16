@@ -217,6 +217,17 @@ service cloud.firestore {
         && isOptionalTimestamp(data, 'createdAt');
     }
 
+    function isTodo() {
+      let data = request.resource.data;
+
+      return data.keys().hasOnly(['title', 'done', 'createdAt'])
+        && data.title is string
+        && data.title.size() > 0
+        && data.title.size() <= 120
+        && data.done is bool
+        && isOptionalTimestamp(data, 'createdAt');
+    }
+
     function isStudyTag() {
       let data = request.resource.data;
 
@@ -249,6 +260,12 @@ service cloud.firestore {
       match /tags/{tagId} {
         allow read: if isOwner(uid);
         allow create, update: if isOwner(uid) && isStudyTag();
+        allow delete: if isOwner(uid);
+      }
+
+      match /todos/{todoId} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isTodo();
         allow delete: if isOwner(uid);
       }
     }

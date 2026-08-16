@@ -40,7 +40,11 @@ import {
   type Gift,
   type SendGiftResult,
 } from "../services/giftService";
-import { addGiftable, takeGiftable } from "../utils/giftableInventory";
+import {
+  addGiftable,
+  availableToGift,
+  spendGiftable,
+} from "../utils/giftableInventory";
 import { initPushNotifications } from "../services/pushNotifications";
 import { dailyGoalRewardCoins } from "../services/userProfileService";
 import {
@@ -393,13 +397,12 @@ export function AppProvider() {
       return { status: "error" };
     }
 
-    const remaining = takeGiftable(appState.giftablePastries, pastryId);
-
-    if (!remaining) {
+    if (availableToGift(appState.completedSessions, appState.giftablePastries, pastryId) <= 0) {
       return { status: "no-stock" };
     }
 
     // Spend the bake up front (optimistic), then send.
+    const remaining = spendGiftable(appState.giftablePastries, pastryId);
     await updateUserProfile({ giftablePastries: remaining });
 
     const giftId = await createGift(
@@ -553,10 +556,8 @@ export function AppProvider() {
       });
 
       if (saved) {
-        // Bank the freshly baked pastry so it can be gifted to a friend later.
-        await updateUserProfile({
-          giftablePastries: addGiftable(appState.giftablePastries, pastry.id),
-        });
+        // The freshly baked pastry becomes giftable automatically: giftable
+        // stock is derived from completed sessions, so nothing to record here.
 
         // Award the once-per-day goal bonus if this session crosses the target.
         // Fold it into the single coin update so we don't double-read stale coins.

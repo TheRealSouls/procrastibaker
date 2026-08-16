@@ -1,16 +1,24 @@
 import { pastries } from "../data/pastries";
+import type { StudySession } from "../types";
 
-// A map of pastryId -> how many baked units the user holds and can gift. Pastries
-// are earned by completing focus sessions (one bake per session) and spent by
-// gifting them to friends. Separate from `unlockedPastryIds`, which only tracks
-// which pastry *types* have been unlocked.
+/**
+ * Ledger of gifting adjustments per pastry id: +1 when a gift is claimed, -1 when
+ * one is sent. Values may be negative.
+ *
+ * The number you can actually gift is derived as
+ * `completed sessions for that pastry + this ledger`, rather than being a stored
+ * stock count. A stored count only ever grew from sessions finished after the
+ * feature shipped, so existing bakes (and demo sessions added through the
+ * developer tools) granted nothing and the picker wrongly claimed you had never
+ * baked anything.
+ */
 export type GiftablePastries = Record<string, number>;
 
 function isPastryId(value: unknown): value is string {
   return typeof value === "string" && pastries.some((pastry) => pastry.id === value);
 }
 
-// Keep only known pastry ids with a positive whole-number count.
+/** Keeps known pastry ids with a whole-number adjustment, dropping zeroes. */
 export function normalizeGiftablePastries(value: unknown): GiftablePastries {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return {};
@@ -18,10 +26,10 @@ export function normalizeGiftablePastries(value: unknown): GiftablePastries {
 
   const result: GiftablePastries = {};
 
-  for (const [id, count] of Object.entries(value as Record<string, unknown>)) {
-    if (isPastryId(id) && typeof count === "number" && Number.isFinite(count)) {
-      const whole = Math.floor(count);
-      if (whole > 0) {
+  for (const [id, amount] of Object.entries(value as Record<string, unknown>)) {
+    if (isPastryId(id) && typeof amount === "number" && Number.isFinite(amount)) {
+      const whole = Math.trunc(amount);
+      if (whole !== 0) {
         result[id] = whole;
       }
     }
@@ -30,38 +38,56 @@ export function normalizeGiftablePastries(value: unknown): GiftablePastries {
   return result;
 }
 
-export function giftableCount(map: GiftablePastries, pastryId: string): number {
-  return Math.max(0, Math.floor(map[pastryId] ?? 0));
+/** How many of a pastry the user has baked, from their completed sessions. */
+export function bakedCount(
+  sessions: StudySession[],
+  pastryId: string,
+): number {
+  return sessions.reduce(
+    (total, session) => (session.pastryId === pastryId ? total + 1 : total),
+    0,
+  );
 }
 
-// Returns a new map with `pastryId` incremented by `amount`.
+/** How many of a pastry can be gifted right now. Never negative. */
+export function availableToGift(
+  sessions: StudySession[],
+  ledger: GiftablePastries,
+  pastryId: string,
+): number {
+  const adjustment = Math.trunc(ledger[pastryId] ?? 0);
+  return Math.max(0, bakedCount(sessions, pastryId) + adjustment);
+}
+
+/** Every pastry with at least one giftable unit, most plentiful first. */
+export function giftableEntries(
+  sessions: StudySession[],
+  ledger: GiftablePastries,
+): Array<[string, number]> {
+  const ids = new Set<string>([
+    ...sessions.map((session) => session.pastryId),
+    ...Object.keys(ledger),
+  ]);
+
+  return [...ids]
+    .filter(isPastryId)
+    .map((id): [string, number] => [id, availableToGift(sessions, ledger, id)])
+    .filter(([, count]) => count > 0)
+    .sort((a, b) => b[1] - a[1]);
+}
+
+/** Records a claimed gift (+1). */
 export function addGiftable(
-  map: GiftablePastries,
+  ledger: GiftablePastries,
   pastryId: string,
-  amount = 1,
 ): GiftablePastries {
-  return { ...map, [pastryId]: giftableCount(map, pastryId) + Math.max(1, amount) };
+  return { ...ledger, [pastryId]: Math.trunc(ledger[pastryId] ?? 0) + 1 };
 }
 
-// Returns a new map with one unit of `pastryId` removed (dropping the key at 0),
-// or null when there is nothing to take.
-export function takeGiftable(
-  map: GiftablePastries,
+/** Records a sent gift (-1). */
+export function spendGiftable(
+  ledger: GiftablePastries,
   pastryId: string,
-): GiftablePastries | null {
-  const current = giftableCount(map, pastryId);
-
-  if (current <= 0) {
-    return null;
-  }
-
-  const next = { ...map };
-
-  if (current - 1 <= 0) {
-    delete next[pastryId];
-  } else {
-    next[pastryId] = current - 1;
-  }
-
-  return next;
+): GiftablePastries {
+  return { ...ledger, [pastryId]: Math.trunc(ledger[pastryId] ?? 0) - 1 };
 }

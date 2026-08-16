@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Navigate, NavLink, Outlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AppNav } from "./AppNav";
@@ -27,6 +27,47 @@ export function AppShell() {
     discardActiveSession,
   } = useApp();
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const sidebarRef = useRef<HTMLElement | null>(null);
+
+  // On narrow screens the sidebar becomes a fixed bottom bar that floats over
+  // the page. Publish its measured height as --bottom-bar-height so the layout
+  // can reserve exactly that much space. Measured rather than hardcoded because
+  // the bar grows with its contents, and a stale guess leaves the last card
+  // permanently hidden underneath it.
+  useEffect(() => {
+    const node = sidebarRef.current;
+
+    if (!node) {
+      return;
+    }
+
+    function publishHeight() {
+      const sidebar = sidebarRef.current;
+
+      if (!sidebar) {
+        return;
+      }
+
+      // On desktop the sidebar is a normal column, so nothing overlaps.
+      const isBottomBar = getComputedStyle(sidebar).position === "fixed";
+      document.documentElement.style.setProperty(
+        "--bottom-bar-height",
+        isBottomBar ? `${Math.ceil(sidebar.getBoundingClientRect().height)}px` : "0px",
+      );
+    }
+
+    publishHeight();
+
+    const observer = new ResizeObserver(publishHeight);
+    observer.observe(node);
+    window.addEventListener("resize", publishHeight);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", publishHeight);
+      document.documentElement.style.removeProperty("--bottom-bar-height");
+    };
+  }, []);
 
   // Signing out mid-bake would strand the pastry: the timer's own cleanup runs
   // after auth is gone, so its write would be rejected. Confirm first, then
@@ -101,7 +142,7 @@ export function AppShell() {
         </button>
       </div>
 
-      <aside className="sidebar">
+      <aside className="sidebar" ref={sidebarRef}>
         <div className="brand">
           <img
             alt=""

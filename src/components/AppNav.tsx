@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import barChartIcon from "../media/sprites/bar_chart.png";
 import clockIcon from "../media/sprites/clock.png";
+import friendsIcon from "../media/sprites/friends.png";
 import houseIcon from "../media/sprites/house.png";
 import magnifyingGlassIcon from "../media/sprites/magnifying_glass.png";
 import muffinIcon from "../media/sprites/muffin.png";
@@ -27,7 +28,7 @@ const navItems: NavItem[] = [
   { icon: muffinIcon, to: "/bakery", labelKey: "nav.bakery" },
   { icon: shoppingCartIcon, to: "/shop", labelKey: "nav.shop" },
   { icon: barChartIcon, to: "/stats", labelKey: "nav.stats" },
-  { faIcon: "fa-solid fa-user-group", to: "/friends", labelKey: "nav.friends" },
+  { icon: friendsIcon, to: "/friends", labelKey: "nav.friends" },
   { icon: magnifyingGlassIcon, to: "/feedback", labelKey: "nav.feedback" },
 ];
 

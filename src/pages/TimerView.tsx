@@ -91,9 +91,10 @@ export function TimerView({
   const fallbackTag = state.tags[0] ?? DEFAULT_TAGS[0];
   const selectedTag =
     findTagById(state.tags, selectedTagId) ?? fallbackTag;
-  const progress = Math.round(
-    ((duration * 60 - remainingSeconds) / (duration * 60)) * 100,
-  );
+  // Deliberately not rounded: the bar animates between ticks, so a whole-number
+  // percentage made it jump a step at a time. The Oven rounds it for the label.
+  const progress =
+    ((duration * 60 - remainingSeconds) / (duration * 60)) * 100;
   const coinReward = calculateCoins(duration);
   const reward = t("timer.coinReward", { count: coinReward });
   const completedMinutes = state.completedSessions.reduce(

@@ -420,17 +420,6 @@ label,
   box-shadow: var(--shadow-inset), var(--shadow-soft);
 }
 
-.nav-button.active::after {
-  position: absolute;
-  right: 0.7rem;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: rgba(91, 53, 31, 0.28);
-  box-shadow: 0 15px 0 rgba(91, 53, 31, 0.14);
-  content: "";
-}
-
 .button.primary {
   border-color: rgba(199, 123, 48, 0.68);
   background:
@@ -946,6 +935,17 @@ label,
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   animation: streak-flame 1.6s ease-in-out infinite;
+}
+
+/* Fire sprite used inline in the friends leaderboard streak column. */
+.streak-sprite {
+  width: 1.05em;
+  height: 1.05em;
+  margin-right: 0.28em;
+  vertical-align: -0.16em;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 .streak-badge__count {
@@ -1858,6 +1858,9 @@ label,
   height: 100%;
   border-radius: inherit;
   background: var(--color-honey);
+  /* The timer ticks every 250ms. Easing the width over exactly that period, and
+     linearly, makes the bar creep continuously instead of stepping. */
+  transition: width 250ms linear;
 }
 
 .bar-track {
@@ -2626,7 +2629,9 @@ label,
 
 .shop-card__meta {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* Two fixed columns squeezed "Unlocked" past the card edge on narrow screens.
+     auto-fit lets the pair drop to one column instead of overflowing. */
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
   gap: 0.75rem;
 }
 
@@ -2648,7 +2653,13 @@ label,
   font-weight: 900;
 }
 
+.shop-card__meta dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .shop-status {
+  max-width: 100%;
   display: inline-flex;
   width: fit-content;
   min-height: 26px;
@@ -4067,12 +4078,13 @@ button:disabled,
 @media (max-width: 820px) {
   .app-shell {
     display: block;
-    /* The top bar and the bottom nav are both fixed, so the page needs matching
-       padding on each side. Without the top value the first card on a page (the
-       daily goal, the username block) sat underneath the bar and was unreadable.
-       The bottom value clears the nav plus the settings link beneath it. */
+    /* The top bar and the bottom nav are both fixed, so the page needs padding
+       on each side or the first and last cards sit underneath them.
+       --bottom-bar-height is measured from the real bar at runtime in
+       AppShell.tsx, because hardcoded guesses kept drifting from the bar's
+       actual height as nav items were added. The fallback matches a full bar. */
     padding-top: 68px;
-    padding-bottom: 132px;
+    padding-bottom: calc(var(--bottom-bar-height, 164px) + 1.25rem);
   }
 
   .mobile-topbar {
@@ -4165,7 +4177,10 @@ button:disabled,
   }
 
   .main-content {
-    padding: 5rem 1rem 1.25rem;
+    /* Bottom clearance is owned by .app-shell (which accounts for the fixed
+       bar); this only needs room for the floating sound player above it. A
+       shorthand here previously reset the bottom to 1.25rem and undid that. */
+    padding: 1rem 1rem 5rem;
   }
 
   .dashboard-hero,
@@ -4273,7 +4288,8 @@ button:disabled,
   }
 
   .oven__pastry img,
-  .oven--active .oven__glow {
+  .oven--active .oven__glow,
+  .oven__progress-fill {
     transition: none !important;
   }
 
@@ -4507,6 +4523,15 @@ button:disabled,
    also stretch from the opposite edge. */
 .lofi-dock.is-floating {
   align-items: flex-start;
+}
+
+/* Expanding from a corner used to push the panel off screen, because the dock is
+   anchored by a corner and the panel simply grew outwards from it. Capping the
+   dock to the viewport keeps the whole player reachable at any position. */
+.lofi-dock {
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 24px);
+  overflow: auto;
 }
 
 .lofi-dock.is-dragging {
@@ -5362,6 +5387,71 @@ button:disabled,
   color: var(--color-caramel);
 }
 
+/* ---------- To-do list ---------- */
+.todo-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  margin-top: 0.6rem;
+}
+
+.todo-add input {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.todo-empty {
+  margin: 0.9rem 0 0;
+}
+
+.todo-list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.9rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.todo-item {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(91, 53, 31, 0.14);
+  border-radius: 10px;
+  background: rgba(255, 250, 240, 0.64);
+}
+
+.todo-item__check {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  min-width: 0;
+  font-weight: 700;
+  color: var(--color-cocoa);
+  cursor: var(--cursor-interactive);
+}
+
+.todo-item__check input {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-caramel);
+  cursor: var(--cursor-interactive);
+}
+
+.todo-item.is-done .todo-item__check span {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+.todo-item__delete {
+  flex-shrink: 0;
+  padding: 0.3rem 0.55rem;
+}
+
 /* ---------- Daily goal ---------- */
 .daily-goal-card {
   display: grid;
@@ -5445,11 +5535,19 @@ button:disabled,
     padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
   }
 
+  /* Add only the device inset here. This block sits after the layout rules
+     above, so restating a fixed height would silently override the measured
+     one, which is exactly the bug that kept the bottom cards covered. */
   .app-shell {
-    padding-bottom: calc(82px + env(safe-area-inset-bottom));
+    padding-bottom: calc(
+      var(--bottom-bar-height, 164px) + 1.25rem + env(safe-area-inset-bottom)
+    );
   }
 
+  /* Float the player just above the real bar rather than a guessed offset. */
   .lofi-dock {
-    bottom: calc(90px + env(safe-area-inset-bottom));
+    bottom: calc(
+      var(--bottom-bar-height, 164px) + 0.75rem + env(safe-area-inset-bottom)
+    );
   }
 }

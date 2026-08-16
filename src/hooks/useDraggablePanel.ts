@@ -159,6 +159,14 @@ export function useDraggablePanel(storageKey: string) {
     return () => window.removeEventListener("resize", handleResize);
   }, [position, clampToViewport]);
 
+  // Pull the panel back inside the viewport after its size changes, such as
+  // expanding from the collapsed bubble near a screen edge.
+  const reclamp = useCallback(() => {
+    setPosition((current) =>
+      current ? clampToViewport(current.x, current.y) : current,
+    );
+  }, [clampToViewport]);
+
   const resetPosition = useCallback(() => {
     setPosition(null);
 
@@ -174,6 +182,7 @@ export function useDraggablePanel(storageKey: string) {
     position,
     isDragging,
     resetPosition,
+    reclamp,
     // Lets a click handler on a drag handle bail out after an actual drag.
     wasDragged: () => movedRef.current,
     handleProps: {

@@ -5,6 +5,7 @@ import { PastryVisual } from "../components/PastryVisual";
 import { ProgressBar } from "../components/ProgressBar";
 import { StatCard } from "../components/StatCard";
 import { StreakBadge } from "../components/StreakBadge";
+import { TodoList } from "../components/TodoList";
 import { pastries } from "../data/pastries";
 import {
   dailyGoalRewardCoins,
@@ -240,6 +241,8 @@ export function DashboardView({
           variant="metric"
         />
       </section>
+
+      <TodoList uid={state.user?.uid} />
 
       <section className="page-card streak-card" aria-labelledby="streak-heading">
         <div className="streak-card__main">
