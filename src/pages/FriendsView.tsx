@@ -335,11 +335,16 @@ export function FriendsView() {
             {friends.map((friend) => (
               <li className="friends-list__item" key={friend.id}>
                 <button
-                  className="friends-list__name friends-list__name-button"
+                  className="friends-list__profile"
                   onClick={() => setProfileFriend(friend)}
                   type="button"
                 >
-                  {friend.username}
+                  <span className="friends-list__name friends-list__name-button">
+                    {friend.username}
+                  </span>
+                  <span className="friends-list__bio">
+                    {friend.bio || t("friends.noBio")}
+                  </span>
                 </button>
                 <div className="friends-list__actions">
                   <button

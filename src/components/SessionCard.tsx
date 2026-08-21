@@ -36,10 +36,7 @@ export function SessionCard({ session, variant }: SessionCardProps) {
             <span className="tag-dot" aria-hidden="true" />
             <span>{session.tagName}</span>
           </span>
-          <span>
-            {isExpired ? `${t("sessionCard.planned")} ` : ""}
-            {formatMinutes(session.durationMinutes)}
-          </span>
+          {!isExpired && <span>{formatMinutes(session.durationMinutes)}</span>}
         </p>
         <time dateTime={session.endedAt}>{formatDate(session.endedAt)}</time>
       </div>

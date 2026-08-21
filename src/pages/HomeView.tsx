@@ -342,30 +342,51 @@ export function HomeView({ onStart }: HomeViewProps) {
       </ScrollReveal>
 
       <footer className="landing-footer">
-        <div>
-          <strong className="app-wordmark">{appName}</strong>
-          <p>
-            A cozy study timer where every focused block comes out of the oven.
-            All you knead is love. :)
-          </p>
+        <div className="landing-footer__grid">
+          <div className="landing-footer__brand">
+            <strong className="app-wordmark">{appName}</strong>
+            <p>
+              A cozy study timer where every focused block comes out of the
+              oven. All you knead is love. :)
+            </p>
+          </div>
+
+          <nav aria-labelledby="footer-explore" className="landing-footer__col">
+            <h2 className="landing-footer__heading" id="footer-explore">
+              Explore
+            </h2>
+            <a href="#how-it-works">How it works</a>
+            <a href="#features">Features</a>
+            <a href="#preview">Preview</a>
+          </nav>
+
+          <nav aria-labelledby="footer-connect" className="landing-footer__col">
+            <h2 className="landing-footer__heading" id="footer-connect">
+              Connect
+            </h2>
+            <a href={githubUrl} rel="noreferrer" target="_blank">
+              <i className="fa-brands fa-github" aria-hidden="true" />
+              <span>GitHub</span>
+            </a>
+            <a href={linkedinUrl} rel="noreferrer" target="_blank">
+              <i className="fa-brands fa-linkedin" aria-hidden="true" />
+              <span>LinkedIn</span>
+            </a>
+          </nav>
+
+          <nav aria-labelledby="footer-legal" className="landing-footer__col">
+            <h2 className="landing-footer__heading" id="footer-legal">
+              Legal
+            </h2>
+            <Link to="/privacy">Privacy Policy</Link>
+            <Link to="/terms">Terms of Service</Link>
+            <Link to="/cookies">Cookie Policy</Link>
+          </nav>
         </div>
-        <nav aria-label="Project links">
-          <a href="#how-it-works">How it works</a>
-          <a href="#features">Features</a>
-          <a href={githubUrl} rel="noreferrer" target="_blank">
-            <i className="fa-brands fa-github fa-2x" aria-hidden="true" />
-            <span>GitHub</span>
-          </a>
-          <a href={linkedinUrl} rel="noreferrer" target="_blank">
-            <i className="fa-brands fa-linkedin fa-2x" aria-hidden="true" />
-            <span>LinkedIn</span>
-          </a>
-        </nav>
-        <nav aria-label="Legal" className="landing-footer__legal">
-          <Link to="/privacy">Privacy Policy</Link>
-          <Link to="/terms">Terms of Service</Link>
-          <Link to="/cookies">Cookie Policy</Link>
-        </nav>
+
+        <p className="landing-footer__bottom">
+          &copy; {new Date().getFullYear()} {appName}
+        </p>
       </footer>
     </main>
   );

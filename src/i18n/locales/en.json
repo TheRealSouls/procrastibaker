@@ -222,7 +222,8 @@
     "remove": "Remove",
     "loadError": "We couldn't load your friends right now. Check your connection and refresh.",
     "outgoingPending_one": "{{count}} request pending.",
-    "outgoingPending_other": "{{count}} requests pending."
+    "outgoingPending_other": "{{count}} requests pending.",
+    "noBio": "No bio yet"
   },
   "gifts": {
     "sendButton": "Send pastry",
@@ -287,9 +288,7 @@
     "buy": "Buy",
     "unlockHint": "Complete more study sessions to unlock this pastry."
   },
-  "sessionCard": {
-    "planned": "planned"
-  },
+  "sessionCard": {},
   "bakery": {
     "title": "Bakery shelf",
     "intro": "Your completed study pastries are arranged by type, with stopped sessions kept in the expired bin below.",

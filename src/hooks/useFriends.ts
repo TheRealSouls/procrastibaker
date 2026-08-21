@@ -16,6 +16,7 @@ export type Friend = {
   id: string; // the friendRequests doc id (for removal)
   uid: string;
   username: string;
+  bio: string;
 };
 
 /**
@@ -62,7 +63,9 @@ export function useFriends(uid?: string, username?: string) {
     [sent],
   );
 
-  const friends = useMemo<Friend[]>(() => {
+  // Raw links only. Names here are the snapshot taken when the request was
+  // created, so they are used for identity and never for display.
+  const friendLinks = useMemo(() => {
     const accepted = [...sent, ...received].filter(
       (request) => request.status === "accepted",
     );
@@ -72,14 +75,31 @@ export function useFriends(uid?: string, username?: string) {
       return {
         id: request.id,
         uid: iAmSender ? request.toUid : request.fromUid,
-        username: iAmSender ? request.toUsername : request.fromUsername,
+        fallbackName: iAmSender ? request.toUsername : request.fromUsername,
       };
     });
   }, [sent, received, uid]);
 
   const friendUidsKey = useMemo(
-    () => friends.map((friend) => friend.uid).sort().join(","),
-    [friends],
+    () => friendLinks.map((friend) => friend.uid).sort().join(","),
+    [friendLinks],
+  );
+
+  // Display names and bios come from the friend's own stats document, which is
+  // rewritten whenever their profile changes. This is what makes a rename show
+  // up here instead of the list keeping the name they had when you added them.
+  const friends = useMemo<Friend[]>(
+    () =>
+      friendLinks.map((link) => {
+        const entry = friendEntries.find((item) => item.uid === link.uid);
+        return {
+          id: link.id,
+          uid: link.uid,
+          username: entry?.username || link.fallbackName,
+          bio: entry?.bio ?? "",
+        };
+      }),
+    [friendLinks, friendEntries],
   );
 
   const refreshLeaderboard = useCallback(async () => {
