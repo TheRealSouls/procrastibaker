@@ -28,6 +28,9 @@ export type User = {
   // Epoch ms of the last username change, 0 if never changed. Drives the
   // once-per-week change cooldown in the UI.
   usernameChangedAt: number;
+  // Short self-description shown on your profile. Mirrored to leaderboardStats
+  // so confirmed friends can read it without access to the whole user doc.
+  bio: string;
   // Streak (Duolingo-style). streakLastActiveDate is a local "YYYY-MM-DD" key,
   // "" if no bake has ever been completed.
   streakCount: number;

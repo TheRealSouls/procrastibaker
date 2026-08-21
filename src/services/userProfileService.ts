@@ -22,6 +22,7 @@ export type UserProfile = {
   uid: string;
   username: string;
   email: string;
+  bio: string;
   coins: number;
   selectedPastryId: string;
   unlockedPastryIds: string[];
@@ -46,6 +47,9 @@ export const USERNAME_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 export const DEFAULT_DAILY_GOAL_MINUTES = 60;
 export const MIN_DAILY_GOAL_MINUTES = 10;
 export const MAX_DAILY_GOAL_MINUTES = 600;
+// Long enough for a sentence or two, short enough to stay a one-line summary.
+export const BIO_MAX_LENGTH = 160;
+
 export const DAILY_GOAL_REWARD_COINS = 25;
 export const MIN_DAILY_GOAL_REWARD_COINS = 5;
 export const MAX_DAILY_GOAL_REWARD_COINS = 60;
@@ -82,6 +86,7 @@ export type UserProfileUpdates = Partial<
     | "audioSettings"
     | "coins"
     | "email"
+    | "bio"
     | "localStorageMigrated"
     | "selectedPastryId"
     | "streakCount"
@@ -123,6 +128,7 @@ export async function createUserProfileIfMissing(user: User) {
       // Reserved up front so two accounts can never share a name.
       username: await claimAvailableUsername(firestore, uid, user.username),
       email: normalizeText(user.email, 80),
+      bio: "",
       coins: Math.max(0, Math.floor(localState.user?.coins ?? user.coins)),
       selectedPastryId,
       unlockedPastryIds:
@@ -418,6 +424,7 @@ function normalizeUserProfile(
       sanitizeUsername(normalizeText(fallbackUser?.username, 32)) ||
       "Student",
     email: normalizeText(value.email, 80) || normalizeText(fallbackUser?.email, 80),
+    bio: normalizeText(value.bio, BIO_MAX_LENGTH),
     coins: Math.max(0, Math.floor(Number(value.coins) || 0)),
     selectedPastryId,
     unlockedPastryIds,
@@ -471,6 +478,10 @@ function normalizeUserProfileUpdates(updates: UserProfileUpdates) {
     if (username) {
       normalized.username = username;
     }
+  }
+
+  if (typeof updates.bio === "string") {
+    normalized.bio = normalizeText(updates.bio, BIO_MAX_LENGTH);
   }
 
   if (typeof updates.email === "string") {

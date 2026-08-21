@@ -1,4 +1,5 @@
 import {
+  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -29,6 +30,9 @@ export type FriendRequest = {
 
 export type LeaderboardStats = {
   username: string;
+  // Mirrored from the private profile so confirmed friends can read it here,
+  // rather than opening up the whole user document.
+  bio: string;
   weeklyMinutes: number;
   weekKey: string;
   totalMinutes: number;
@@ -270,6 +274,7 @@ export async function upsertLeaderboardStats(
   try {
     await setDoc(doc(firestore, "leaderboardStats", uid), {
       username: clip(stats.username, 32) || "Student",
+      bio: clip(stats.bio ?? "", 160),
       weeklyMinutes: Math.max(0, Math.floor(stats.weeklyMinutes)),
       weekKey: clip(stats.weekKey, 10),
       totalMinutes: Math.max(0, Math.floor(stats.totalMinutes)),
@@ -344,6 +349,7 @@ function normalizeStats(value: Record<string, unknown>): LeaderboardStats | null
 
   return {
     username: value.username,
+    bio: typeof value.bio === "string" ? value.bio.slice(0, 160) : "",
     weeklyMinutes: toNonNegativeInt(value.weeklyMinutes),
     weekKey: typeof value.weekKey === "string" ? value.weekKey : "",
     totalMinutes: toNonNegativeInt(value.totalMinutes),
@@ -355,4 +361,140 @@ function toNonNegativeInt(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value)
     ? Math.max(0, Math.floor(value))
     : 0;
+}
+
+
+// ---------------------------------------------------------------------------
+// Safety: blocking and reporting
+// ---------------------------------------------------------------------------
+
+// A block is one doc per direction, id "<blocker>__<blocked>", mirroring how
+// friend links are keyed so the rules can authorise from the id alone.
+function blockId(blockerUid: string, blockedUid: string): string {
+  return `${blockerUid}__${blockedUid}`;
+}
+
+/**
+ * Blocks a user: records the block and tears down any friend link between the
+ * two, in both directions. The security rules additionally refuse a new friend
+ * request from anyone the recipient has blocked, so this cannot be undone by
+ * simply asking again.
+ */
+export async function blockUser(
+  blockerUid: string,
+  blockedUid: string,
+): Promise<boolean> {
+  const firestore = getOptionalFirestore();
+
+  if (!firestore || !blockerUid.trim() || !blockedUid.trim()) {
+    return false;
+  }
+
+  try {
+    await setDoc(doc(firestore, "blocks", blockId(blockerUid, blockedUid)), {
+      blockerUid,
+      blockedUid,
+      createdAt: serverTimestamp(),
+    });
+
+    // Best-effort cleanup: an existing friendship should not survive a block.
+    for (const id of [
+      requestId(blockerUid, blockedUid),
+      requestId(blockedUid, blockerUid),
+    ]) {
+      try {
+        await deleteDoc(doc(firestore, "friendRequests", id));
+      } catch {
+        // Nothing to remove in that direction.
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Block user failed", error);
+    return false;
+  }
+}
+
+export async function unblockUser(
+  blockerUid: string,
+  blockedUid: string,
+): Promise<boolean> {
+  const firestore = getOptionalFirestore();
+
+  if (!firestore || !blockerUid.trim() || !blockedUid.trim()) {
+    return false;
+  }
+
+  try {
+    await deleteDoc(doc(firestore, "blocks", blockId(blockerUid, blockedUid)));
+    return true;
+  } catch (error) {
+    console.error("Unblock user failed", error);
+    return false;
+  }
+}
+
+export type ReportReason = "spam" | "abuse" | "inappropriate" | "other";
+
+/**
+ * Files a moderation report. Write-only for clients: nobody can read, edit or
+ * withdraw reports from the app, so a reported user cannot discover or tamper
+ * with them. Moderators read them through the console or an admin tool.
+ */
+export async function reportUser(
+  reporterUid: string,
+  targetUid: string,
+  targetUsername: string,
+  reason: ReportReason,
+  details: string,
+): Promise<boolean> {
+  const firestore = getOptionalFirestore();
+
+  if (!firestore || !reporterUid.trim() || !targetUid.trim()) {
+    return false;
+  }
+
+  try {
+    await addDoc(collection(firestore, "reports"), {
+      reporterUid,
+      targetUid,
+      targetUsername: clip(targetUsername, 32),
+      reason,
+      details: clip(details, 500),
+      createdAt: serverTimestamp(),
+    });
+    return true;
+  } catch (error) {
+    console.error("Report user failed", error);
+    return false;
+  }
+}
+
+/** Uids this user has blocked, so the UI can hide or mark them. */
+export function listenToBlocks(
+  uid: string,
+  callback: (blockedUids: string[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  const firestore = getOptionalFirestore();
+
+  if (!firestore || !uid.trim()) {
+    return () => undefined;
+  }
+
+  return onSnapshot(
+    query(collection(firestore, "blocks"), where("blockerUid", "==", uid)),
+    (snapshot) => {
+      callback(
+        snapshot.docs
+          .map((item) => item.data().blockedUid)
+          .filter((value): value is string => typeof value === "string"),
+      );
+    },
+    (error) => {
+      console.error("Listen blocks failed", error);
+      onError?.(error);
+    },
+  );
 }

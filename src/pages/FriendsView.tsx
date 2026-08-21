@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useApp } from "../context/AppContext";
 import { useFriends, type Friend } from "../hooks/useFriends";
 import { useGifts } from "../hooks/useGifts";
+import { FriendProfileModal } from "../components/FriendProfileModal";
 import { pastries } from "../data/pastries";
 import { pastrySprites } from "../data/pastrySprites";
 import type { Gift } from "../services/giftService";
@@ -70,6 +71,7 @@ export function FriendsView() {
   const [giftNotice, setGiftNotice] = useState("");
   const [claimBusyId, setClaimBusyId] = useState("");
   const [claimNotice, setClaimNotice] = useState("");
+  const [profileFriend, setProfileFriend] = useState<Friend | null>(null);
 
   // Derived from completed sessions plus the gift ledger, so every bake counts,
   // including ones finished before gifting existed.
@@ -332,7 +334,13 @@ export function FriendsView() {
           <ul className="friends-list">
             {friends.map((friend) => (
               <li className="friends-list__item" key={friend.id}>
-                <span className="friends-list__name">{friend.username}</span>
+                <button
+                  className="friends-list__name friends-list__name-button"
+                  onClick={() => setProfileFriend(friend)}
+                  type="button"
+                >
+                  {friend.username}
+                </button>
                 <div className="friends-list__actions">
                   <button
                     className="button"
@@ -367,6 +375,18 @@ export function FriendsView() {
           </p>
         )}
       </section>
+
+      {profileFriend && (
+        <FriendProfileModal
+          entry={
+            friendEntries.find((item) => item.uid === profileFriend.uid) ?? null
+          }
+          onBlocked={() => remove(profileFriend.id)}
+          onClose={() => setProfileFriend(null)}
+          uid={profileFriend.uid}
+          username={profileFriend.username}
+        />
+      )}
 
       {giftTarget && (
         <div

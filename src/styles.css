@@ -5551,3 +5551,95 @@ button:disabled,
     );
   }
 }
+
+/* ---------- Friend profile, bio and safety controls ---------- */
+.account-bio,
+.friend-profile__textarea {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-soft-white);
+  color: var(--color-cocoa);
+  font: inherit;
+  resize: vertical;
+}
+
+.friends-list__name-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-cocoa);
+  font: inherit;
+  font-weight: 800;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: rgba(199, 123, 48, 0.5);
+  text-underline-offset: 3px;
+  cursor: var(--cursor-interactive);
+}
+
+.friends-list__name-button:hover {
+  color: var(--color-caramel);
+}
+
+.friend-profile {
+  width: min(460px, 100%);
+  text-align: left;
+}
+
+.friend-profile__bio {
+  margin: 0.35rem 0 1rem;
+  color: var(--color-brown);
+  overflow-wrap: anywhere;
+}
+
+.friend-profile__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 0.6rem;
+  margin: 0 0 1rem;
+}
+
+.friend-profile__stats div {
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: #fff8e8;
+}
+
+.friend-profile__stats dt {
+  margin-bottom: 0.2rem;
+  color: rgba(59, 36, 22, 0.64);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.friend-profile__stats dd {
+  margin: 0;
+  font-weight: 900;
+}
+
+.friend-profile__safety {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--color-line);
+}
+
+.friend-profile__label {
+  display: block;
+  margin: 0.7rem 0 0.3rem;
+  font-weight: 800;
+  color: var(--color-cocoa);
+}
+
+.friend-profile__select {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-soft-white);
+  font: inherit;
+}

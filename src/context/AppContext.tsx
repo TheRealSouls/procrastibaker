@@ -33,7 +33,12 @@ import {
   signUpWithEmail,
 } from "../utils/authService";
 import { missingFirebaseConfigMessage } from "../utils/firebase";
-import { upsertLeaderboardStats } from "../services/friendService";
+import {
+  blockUser,
+  reportUser,
+  upsertLeaderboardStats,
+  type ReportReason,
+} from "../services/friendService";
 import {
   createGift,
   markGiftClaimed,
@@ -84,6 +89,14 @@ type AppContextValue = {
   handleResetData: () => void;
   handleUsernameChange: (username: string) => Promise<UsernameChangeResult>;
   handleDailyGoalChange: (minutes: number) => void;
+  handleBioChange: (bio: string) => Promise<boolean>;
+  handleBlockUser: (uid: string) => Promise<boolean>;
+  handleReportUser: (
+    uid: string,
+    username: string,
+    reason: ReportReason,
+    details: string,
+  ) => Promise<boolean>;
   handleSelectPastry: (pastryId: string) => void;
   handleBuyPastry: (pastryId: string) => void;
   handleSendGift: (
@@ -211,6 +224,7 @@ export function AppProvider() {
   // minutes. Writes whenever the signed-in user's sessions/streak/name change.
   const leaderboardUsername = appState.user?.username;
   const leaderboardStreak = appState.user?.streakCount;
+  const leaderboardBio = appState.user?.bio;
   const completedSessions = appState.completedSessions;
   useEffect(() => {
     if (!userUid) {
@@ -219,12 +233,13 @@ export function AppProvider() {
 
     void upsertLeaderboardStats(userUid, {
       username: leaderboardUsername ?? "Student",
+      bio: leaderboardBio ?? "",
       weeklyMinutes: weeklyFocusMinutes(completedSessions),
       weekKey: weekKey(),
       totalMinutes: totalFocusMinutes(completedSessions),
       streakCount: leaderboardStreak ?? 0,
     });
-  }, [userUid, leaderboardUsername, leaderboardStreak, completedSessions]);
+  }, [userUid, leaderboardUsername, leaderboardBio, leaderboardStreak, completedSessions]);
 
   async function handleGoogleLogin() {
     setAuthError("");
@@ -353,6 +368,27 @@ export function AppProvider() {
     }
 
     void updateUserProfile({ dailyGoalMinutes: Math.floor(minutes) });
+  }
+
+  async function handleBioChange(bio: string): Promise<boolean> {
+    return updateUserProfile({ bio });
+  }
+
+  // Blocking removes any friendship and, via the security rules, stops the
+  // blocked user sending a fresh request.
+  async function handleBlockUser(uid: string): Promise<boolean> {
+    const me = appState.user?.uid;
+    return me ? blockUser(me, uid) : false;
+  }
+
+  async function handleReportUser(
+    uid: string,
+    username: string,
+    reason: ReportReason,
+    details: string,
+  ): Promise<boolean> {
+    const me = appState.user?.uid;
+    return me ? reportUser(me, uid, username, reason, details) : false;
   }
 
   function handleSelectPastry(pastryId: string) {
@@ -773,6 +809,9 @@ export function AppProvider() {
     handleResetData,
     handleUsernameChange,
     handleDailyGoalChange,
+    handleBioChange,
+    handleBlockUser,
+    handleReportUser,
     handleSelectPastry,
     handleBuyPastry,
     handleSendGift,

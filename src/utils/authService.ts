@@ -228,6 +228,7 @@ function normalizeAppUser(user: UserInput): User {
     username,
     email,
     coins: Math.max(0, Math.floor(user.coins)),
+    bio: "",
     authProvider: user.authProvider === "google" ? "google" : "email",
     emailVerified: user.emailVerified ?? false,
     // Placeholders, the live values come from the Firestore profile via

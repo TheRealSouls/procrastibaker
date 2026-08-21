@@ -34,6 +34,7 @@ service cloud.firestore {
       return data.keys().hasOnly([
           'username',
           'email',
+          'bio',
           'coins',
           'selectedPastryId',
           'unlockedPastryIds',
@@ -55,6 +56,7 @@ service cloud.firestore {
         && data.username.size() <= 32
         && data.email is string
         && data.email.size() <= 120
+        && (!('bio' in data) || (data.bio is string && data.bio.size() <= 160))
         && data.coins is number
         && data.coins >= 0
         && data.selectedPastryId is string
@@ -170,6 +172,7 @@ service cloud.firestore {
 
       return data.keys().hasOnly([
           'username',
+          'bio',
           'weeklyMinutes',
           'weekKey',
           'totalMinutes',
@@ -179,6 +182,7 @@ service cloud.firestore {
         && data.username is string
         && data.username.size() > 0
         && data.username.size() <= 32
+        && (!('bio' in data) || (data.bio is string && data.bio.size() <= 160))
         && data.weeklyMinutes is number
         && data.weeklyMinutes >= 0
         && data.weekKey is string
@@ -312,6 +316,9 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.resource.data.fromUid == request.auth.uid
         && request.resource.data.status == 'pending'
+        // Blocking has to actually stick: the recipient blocking this sender
+        // refuses the request outright rather than only hiding it in the UI.
+        && !exists(/databases/$(database)/documents/blocks/$(request.resource.data.toUid + '__' + request.auth.uid))
         && isFriendRequest();
       allow update: if request.auth != null
         && resource.data.toUid == request.auth.uid
@@ -410,6 +417,45 @@ service cloud.firestore {
       allow delete: if request.auth != null
         && (resource.data.fromUid == request.auth.uid
           || resource.data.toUid == request.auth.uid);
+    }
+
+    // Blocks, one doc per direction, id "<blocker>__<blocked>". Only the blocker
+    // can see or lift their own blocks; the blocked user is never told.
+    match /blocks/{id} {
+      allow get, list: if request.auth != null
+        && resource.data.blockerUid == request.auth.uid;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['blockerUid', 'blockedUid', 'createdAt'])
+        && request.resource.data.blockerUid == request.auth.uid
+        && request.resource.data.blockedUid is string
+        && request.resource.data.blockedUid.size() > 0
+        && request.resource.data.blockedUid.size() <= 128
+        && request.resource.data.blockedUid != request.auth.uid
+        && isOptionalTimestamp(request.resource.data, 'createdAt');
+      allow delete: if request.auth != null
+        && resource.data.blockerUid == request.auth.uid;
+    }
+
+    // Moderation reports are write-only for clients. Nobody can read, edit or
+    // withdraw one from the app, so a reported user cannot find or tamper with
+    // reports about them. Moderators read these with admin credentials.
+    match /reports/{id} {
+      allow read, update, delete: if false;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly([
+          'reporterUid', 'targetUid', 'targetUsername', 'reason', 'details', 'createdAt'
+        ])
+        && request.resource.data.reporterUid == request.auth.uid
+        && request.resource.data.targetUid is string
+        && request.resource.data.targetUid.size() > 0
+        && request.resource.data.targetUid.size() <= 128
+        && request.resource.data.targetUid != request.auth.uid
+        && request.resource.data.targetUsername is string
+        && request.resource.data.targetUsername.size() <= 32
+        && request.resource.data.reason in ['spam', 'abuse', 'inappropriate', 'other']
+        && request.resource.data.details is string
+        && request.resource.data.details.size() <= 500
+        && isOptionalTimestamp(request.resource.data, 'createdAt');
     }
 
     match /{document=**} {

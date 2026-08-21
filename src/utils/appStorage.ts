@@ -142,6 +142,7 @@ function normalizeUser(user: Record<string, unknown>): User {
     ...(uid ? { uid } : {}),
     username: String(user.username).trim().slice(0, 32),
     email: String(user.email).trim().slice(0, 80),
+    bio: typeof user.bio === "string" ? user.bio.trim().slice(0, 160) : "",
     coins: Math.max(0, Math.floor(Number(user.coins))),
     authProvider,
     emailVerified: user.emailVerified === true,

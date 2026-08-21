@@ -445,6 +445,37 @@
     "deleting": "Deleting...",
     "cancel": "Cancel",
     "passwordRequired": "Please enter your password to confirm.",
-    "genericError": "Something went wrong."
+    "genericError": "Something went wrong.",
+    "bioHeading": "Your bio",
+    "bioBody": "A short line about you, shown to your friends on your profile.",
+    "bioCount_one": "{{count}} character left",
+    "bioCount_other": "{{count}} characters left",
+    "bioSaved": "Bio saved!",
+    "bioSaving": "Saving...",
+    "bioFailed": "We could not save your bio. Please try again."
+  },
+  "profile": {
+    "noBio": "This baker has not written a bio yet.",
+    "thisWeek": "This week",
+    "allTime": "All time",
+    "streak": "Streak",
+    "close": "Close",
+    "report": "Report",
+    "block": "Block",
+    "reportIntro": "Tell us what is wrong with {{name}}'s profile or behaviour. Reports are private and are only seen by moderators.",
+    "reportReason": "Reason",
+    "reportDetails": "Details (optional)",
+    "submitReport": "Submit report",
+    "reporting": "Sending...",
+    "reportSent": "Report sent. Thank you, we will review it.",
+    "reportFailed": "We could not send that report. Please try again.",
+    "reason_spam": "Spam",
+    "reason_abuse": "Harassment or abuse",
+    "reason_inappropriate": "Inappropriate content",
+    "reason_other": "Something else",
+    "blockConfirm": "Block {{name}}? They will be removed from your friends and cannot send you requests, gifts or see your stats.",
+    "confirmBlock": "Block them",
+    "blocking": "Blocking...",
+    "blockFailed": "We could not block them. Please try again."
   }
 }

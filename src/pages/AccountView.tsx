@@ -8,6 +8,7 @@ import {
   setAnalyticsOptedOut,
 } from "../services/analytics";
 import { saveReminderSettings } from "../services/reminderSyncService";
+import { BIO_MAX_LENGTH } from "../services/userProfileService";
 import {
   loadReminderPrefs,
   saveReminderPrefs,
@@ -22,6 +23,7 @@ export function AccountView() {
     appState,
     handlePasswordReset,
     handleDeleteAccount,
+    handleBioChange,
     handleResendVerification,
     handleRefreshVerification,
     isAuthLoading,
@@ -32,6 +34,8 @@ export function AccountView() {
     "idle" | "sending" | "sent" | "failed" | "checking" | "still-unverified"
   >("idle");
   const [verifyMessage, setVerifyMessage] = useState("");
+  const [bioDraft, setBioDraft] = useState(appState.user?.bio ?? "");
+  const [bioStatus, setBioStatus] = useState<"idle" | "saving" | "saved" | "failed">("idle");
   const user = appState.user;
   const isEmailUser = user?.authProvider === "email";
 
@@ -45,6 +49,12 @@ export function AccountView() {
 
   if (!user) {
     return null;
+  }
+
+  async function saveBio() {
+    setBioStatus("saving");
+    const ok = await handleBioChange(bioDraft);
+    setBioStatus(ok ? "saved" : "failed");
   }
 
   async function resendVerification() {
@@ -226,6 +236,48 @@ export function AccountView() {
           {t("account.changeUsernamePrefix")}{" "}
           <Link to="/dashboard">{t("account.dashboardWord")}</Link>.
         </p>
+      </section>
+
+      <section className="page-card account-section">
+        <h2>{t("account.bioHeading")}</h2>
+        <p>{t("account.bioBody")}</p>
+        <label className="sr-only" htmlFor="account-bio">
+          {t("account.bioHeading")}
+        </label>
+        <textarea
+          className="account-bio"
+          id="account-bio"
+          maxLength={BIO_MAX_LENGTH}
+          onChange={(event) => {
+            setBioDraft(event.target.value);
+            setBioStatus("idle");
+          }}
+          rows={3}
+          value={bioDraft}
+        />
+        <p className="field-hint">
+          {t("account.bioCount", {
+            count: BIO_MAX_LENGTH - bioDraft.length,
+          })}
+        </p>
+        {bioStatus === "saved" && (
+          <p className="auth-notice" role="status">
+            {t("account.bioSaved")}
+          </p>
+        )}
+        {bioStatus === "failed" && (
+          <p className="auth-error" role="alert">
+            {t("account.bioFailed")}
+          </p>
+        )}
+        <button
+          className="button primary"
+          disabled={bioStatus === "saving" || bioDraft === (user.bio ?? "")}
+          onClick={() => void saveBio()}
+          type="button"
+        >
+          {bioStatus === "saving" ? t("account.bioSaving") : t("common.save")}
+        </button>
       </section>
 
       <section className="page-card account-section">
