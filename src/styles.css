@@ -6175,6 +6175,13 @@ textarea:focus-visible,
   flex-shrink: 0;
   transform-origin: center center;
   transition: transform 0.18s ease;
+  /* A ruled square grid drawn at the tile pitch, so every bake sits in its own
+     cell and empty cells stay visible as the map grows. */
+  background-image:
+    linear-gradient(to right, var(--color-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-line) 1px, transparent 1px);
+  background-size: var(--tile, 26px) var(--tile, 26px);
+  box-shadow: 0 0 0 1px var(--color-line);
 }
 
 .crumb-map__tile {
@@ -6235,4 +6242,120 @@ textarea:focus-visible,
 .leaderboard__you,
 .lofi-dock__toggle {
   color: #241a12;
+}
+
+/* ---------- Form controls ---------- */
+/* Inputs had no styling of their own, so they used the browser default border,
+   which renders as a pale inset line and showed up as a white edge in dark mode.
+   Styling them properly fixes both themes at once. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+textarea,
+select {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--color-soft-border);
+  border-radius: 10px;
+  background: var(--color-soft-white);
+  color: var(--color-cocoa);
+  font: inherit;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"])::placeholder,
+textarea::placeholder {
+  color: var(--color-muted);
+}
+
+:root[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+:root[data-theme="dark"] textarea,
+:root[data-theme="dark"] select {
+  border-color: var(--color-soft-border);
+  background: var(--surface-sunken);
+  color: var(--color-brown);
+}
+
+/* Checkboxes keep the native control but tinted to the bakery palette. */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-caramel);
+}
+
+/* ---------- Dark mode: card separation ---------- */
+/* A 16% hairline is close to invisible against a dark surface, which is why the
+   pastry breakdown and the dashboard cards read as one flat mass. */
+:root[data-theme="dark"] {
+  --color-line: rgba(246, 236, 223, 0.42);
+  --color-soft-border: rgba(246, 236, 223, 0.48);
+}
+
+/* Every card surface gets a real edge and a lift off the page background. */
+:root[data-theme="dark"] .page-card,
+:root[data-theme="dark"] .pastry-breakdown-card,
+:root[data-theme="dark"] .shelf-card,
+:root[data-theme="dark"] .session-card,
+:root[data-theme="dark"] .landing-step-card,
+:root[data-theme="dark"] .landing-feature-card,
+:root[data-theme="dark"] .empty-note-card,
+:root[data-theme="dark"] .crumb-map {
+  border: 1px solid var(--color-line);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-soft);
+}
+
+/* The breakdown tiles carry their own numbers, so they need the strongest
+   separation of the lot. */
+:root[data-theme="dark"] .pastry-breakdown-card {
+  background:
+    linear-gradient(135deg, rgba(255, 214, 130, 0.09), rgba(255, 214, 130, 0.03)),
+    var(--surface-raised);
+}
+
+:root[data-theme="dark"] .pastry-breakdown-card h3 {
+  color: var(--color-brown);
+}
+
+:root[data-theme="dark"] .pastry-breakdown-card strong {
+  color: #ffcf6b;
+}
+
+/* Section dividers and table rules were disappearing too. */
+:root[data-theme="dark"] .section-title-row,
+:root[data-theme="dark"] .expired-bin,
+:root[data-theme="dark"] .bakery-case {
+  border-color: var(--color-line);
+}
+
+.crumb-map__share {
+  padding: 0.4rem 0.7rem;
+}
+
+/* Wheel zoom needs the viewport to own the gesture. */
+.crumb-map__viewport {
+  overscroll-behavior: contain;
+  touch-action: pan-x pan-y;
+}
+
+/* ---------- Friend search ---------- */
+.friend-search__results {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.friend-search__result {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--surface-card);
+}
+
+.friend-search__name {
+  font-weight: 800;
+  color: var(--color-cocoa);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

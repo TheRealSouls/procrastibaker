@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useApp } from "../context/AppContext";
 import { useFriends, type Friend } from "../hooks/useFriends";
@@ -7,6 +7,7 @@ import { FriendProfileModal } from "../components/FriendProfileModal";
 import { pastries } from "../data/pastries";
 import { pastrySprites } from "../data/pastrySprites";
 import type { Gift } from "../services/giftService";
+import { searchUsernames, type UsernameMatch } from "../services/friendService";
 import { giftableEntries } from "../utils/giftableInventory";
 import fireSprite from "../media/sprites/fire.png";
 import { formatMinutes } from "../utils/sessionUtils";
@@ -72,6 +73,51 @@ export function FriendsView() {
   const [claimBusyId, setClaimBusyId] = useState("");
   const [claimNotice, setClaimNotice] = useState("");
   const [profileFriend, setProfileFriend] = useState<Friend | null>(null);
+  const [matches, setMatches] = useState<UsernameMatch[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  // Debounced prefix search, so typing a name suggests real accounts instead of
+  // requiring it to be spelled exactly.
+  useEffect(() => {
+    const term = target.trim();
+
+    if (term.length < 2) {
+      setMatches([]);
+      return;
+    }
+
+    setSearching(true);
+    const handle = window.setTimeout(async () => {
+      const found = await searchUsernames(term, user?.uid ?? "");
+      setMatches(found);
+      setSearching(false);
+    }, 250);
+
+    return () => {
+      window.clearTimeout(handle);
+      setSearching(false);
+    };
+  }, [target, user?.uid]);
+
+  async function requestFriend(username: string) {
+    if (busy) {
+      return;
+    }
+
+    setBusy(true);
+    setNotice("");
+
+    try {
+      const result = await addFriend(username);
+      setNotice(t(RESULT_KEYS[result.status]));
+      if (result.status === "sent" || result.status === "accepted") {
+        setTarget("");
+        setMatches([]);
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
 
   // Derived from completed sessions plus the gift ledger, so every bake counts,
   // including ones finished before gifting existed.
@@ -217,6 +263,42 @@ export function FriendsView() {
             {notice}
           </p>
         )}
+        {matches.length > 0 && (
+          <ul className="friend-search__results">
+            {matches.map((match) => {
+              const existing = friends.find((item) => item.uid === match.uid);
+
+              return (
+                <li className="friend-search__result" key={match.uid}>
+                  <span className="friend-search__name">{match.username}</span>
+                  {existing ? (
+                    <button
+                      className="button"
+                      onClick={() => setProfileFriend(existing)}
+                      type="button"
+                    >
+                      {t("friends.viewProfile")}
+                    </button>
+                  ) : (
+                    <button
+                      className="button primary"
+                      disabled={busy}
+                      onClick={() => void requestFriend(match.username)}
+                      type="button"
+                    >
+                      {t("friends.addButton")}
+                    </button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        {!searching && matches.length === 0 && target.trim().length >= 2 && (
+          <p className="field-hint">{t("friends.noMatches")}</p>
+        )}
+
         <p className="field-hint">{t("friends.addHint")}</p>
       </section>
 

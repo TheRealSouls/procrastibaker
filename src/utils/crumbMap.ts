@@ -43,6 +43,54 @@ export function spiralPosition(index: number): { x: number; y: number } {
   }
 }
 
+// Small deterministic hash, so a given seed always produces the same map. A
+// random shuffle would rearrange every tile on each render.
+function hash(value: string): number {
+  let h = 2166136261;
+
+  for (let i = 0; i < value.length; i += 1) {
+    h ^= value.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+
+  return h >>> 0;
+}
+
+/** Which ring a spiral index belongs to. */
+function ringOf(index: number): number {
+  return index <= 0 ? 0 : Math.ceil((Math.sqrt(index + 1) - 1) / 2);
+}
+
+/**
+ * Reorders indices within each ring using a seeded shuffle. Density still grows
+ * outwards (ring N fills before ring N+1) but the arrangement inside a ring is
+ * scattered, so two bakers with the same totals get different-looking maps.
+ */
+function scatterIndices(count: number, seed: string): number[] {
+  const rings = new Map<number, number[]>();
+
+  for (let i = 0; i < count; i += 1) {
+    const ring = ringOf(i);
+    const bucket = rings.get(ring);
+    if (bucket) bucket.push(i);
+    else rings.set(ring, [i]);
+  }
+
+  const out: number[] = [];
+
+  for (const ring of [...rings.keys()].sort((a, b) => a - b)) {
+    const bucket = rings.get(ring) ?? [];
+    // Fisher-Yates driven by the seeded hash.
+    for (let i = bucket.length - 1; i > 0; i -= 1) {
+      const j = hash(`${seed}:${ring}:${i}`) % (i + 1);
+      [bucket[i], bucket[j]] = [bucket[j], bucket[i]];
+    }
+    out.push(...bucket);
+  }
+
+  return out;
+}
+
 /** "YYYY-MM" for grouping bakes by month. */
 export function monthKey(iso: string): string {
   return iso.slice(0, 7);
@@ -74,11 +122,13 @@ export function buildCrumbMap(
     .slice()
     .sort((a, b) => a.endedAt.localeCompare(b.endedAt));
 
+  const order = scatterIndices(relevant.length, month ?? "all");
+
   return relevant.map((session, index) => ({
     key: session.id || `${session.endedAt}-${index}`,
     pastryId: session.pastryId,
     pastryName: session.pastryName,
-    ...spiralPosition(index),
+    ...spiralPosition(order[index]),
     endedAt: session.endedAt,
   }));
 }
@@ -89,7 +139,13 @@ export function buildCrumbMap(
  */
 export function buildCrumbMapFromCounts(
   counts: Record<string, number>,
+  seed = "friend",
 ): CrumbTile[] {
+  const total = Object.values(counts).reduce(
+    (sum, value) => sum + Math.max(0, Math.floor(value)),
+    0,
+  );
+  const order = scatterIndices(total, seed);
   const tiles: CrumbTile[] = [];
   let index = 0;
 
@@ -102,7 +158,7 @@ export function buildCrumbMapFromCounts(
         key: `${pastry.id}-${n}`,
         pastryId: pastry.id,
         pastryName: pastry.name,
-        ...spiralPosition(index),
+        ...spiralPosition(order[index] ?? index),
         endedAt: "",
       });
       index += 1;

@@ -121,6 +121,7 @@ export function FriendProfileModal({
             <CrumbMap
               compact
               counts={entry?.pastryCounts ?? {}}
+              seed={uid}
               title={t("crumbMap.friendTitle", { name: username })}
             />
 

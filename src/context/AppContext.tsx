@@ -12,6 +12,7 @@ import { pastries } from "../data/pastries";
 import { DEFAULT_TAGS } from "../data/tags";
 import { deleteAllUserData } from "../services/accountService";
 import { useCloudAppState } from "../hooks/useCloudAppState";
+import { usePreferences } from "../hooks/usePreferences";
 import {
   identifyUser,
   resetAnalytics,
@@ -170,6 +171,9 @@ export function AppProvider() {
   } = useCloudAppState();
   const navigate = useNavigate();
   const location = useLocation();
+  // Applied here rather than in the shell so the theme also covers the landing
+  // and login pages, and survives signing out.
+  usePreferences();
   const [authError, setAuthError] = useState("");
   const [authNotice, setAuthNotice] = useState("");
   const [isAuthLoading, setIsAuthLoading] = useState(false);
@@ -567,6 +571,48 @@ export function AppProvider() {
     trackEvent(`streak_${outcome}`, { count: next.count });
   }
 
+  /**
+   * Coins owed for meeting today's focus goal, or 0.
+   *
+   * The bonus is deliberately once per day: dailyGoalRewardedDate is stamped as
+   * soon as it is paid, so raising the goal afterwards and meeting the new
+   * target cannot pay out a second time.
+   */
+  function pendingDailyGoalBonus(extraMinutes: number): number {
+    const user = appState.user;
+    const goalMinutes = user?.dailyGoalMinutes ?? 0;
+    const minutesToday =
+      focusMinutesOnDate(appState.completedSessions) + extraMinutes;
+    const earned =
+      goalMinutes > 0 &&
+      user?.dailyGoalRewardedDate !== todayKey() &&
+      minutesToday >= goalMinutes;
+
+    return earned ? dailyGoalRewardCoins(goalMinutes) : 0;
+  }
+
+  /** Stamps today as paid so the bonus cannot be claimed again. */
+  async function commitDailyGoalBonus(bonus: number): Promise<void> {
+    if (bonus <= 0) {
+      return;
+    }
+
+    await updateUserProfile({ dailyGoalRewardedDate: todayKey() });
+    trackEvent("daily_goal_met", {
+      goalMinutes: appState.user?.dailyGoalMinutes ?? 0,
+    });
+  }
+
+  /** Used by the developer tools, which add sessions outside the timer flow. */
+  async function awardDailyGoalIfEarned(extraMinutes: number): Promise<void> {
+    const bonus = pendingDailyGoalBonus(extraMinutes);
+
+    if (bonus > 0) {
+      await updateCoins({ delta: bonus });
+      await commitDailyGoalBonus(bonus);
+    }
+  }
+
   function handleCompleteSession(
     tag: StudyTag,
     durationMinutes: number,
@@ -600,28 +646,15 @@ export function AppProvider() {
         // The freshly baked pastry becomes giftable automatically: giftable
         // stock is derived from completed sessions, so nothing to record here.
 
-        // Award the once-per-day goal bonus if this session crosses the target.
-        // Fold it into the single coin update so we don't double-read stale coins.
-        const user = appState.user;
-        const today = todayKey();
-        const goalMinutes = user?.dailyGoalMinutes ?? 0;
-        const minutesToday =
-          focusMinutesOnDate(appState.completedSessions) + durationMinutes;
-        const earnedGoalBonus =
-          goalMinutes > 0 &&
-          user?.dailyGoalRewardedDate !== today &&
-          minutesToday >= goalMinutes;
+        // Session coins and the goal bonus are folded into one update so we
+        // never read a stale coin balance twice.
+        const bonus = pendingDailyGoalBonus(durationMinutes);
 
         await updateCoins({
-          delta:
-            calculateCoins(durationMinutes) +
-            (earnedGoalBonus ? dailyGoalRewardCoins(goalMinutes) : 0),
+          delta: calculateCoins(durationMinutes) + bonus,
         });
 
-        if (earnedGoalBonus) {
-          await updateUserProfile({ dailyGoalRewardedDate: today });
-          trackEvent("daily_goal_met", { goalMinutes });
-        }
+        await commitDailyGoalBonus(bonus);
 
         await recordStreakCheckIn();
         trackEvent("bake_completed", {
@@ -673,10 +706,17 @@ export function AppProvider() {
 
   function handleAddDemoCompletedSessions() {
     playFinishSound();
-    void addCompletedSession(createDemoSession("cookie", "study", 25, true, 1));
-    void addCompletedSession(createDemoSession("brownie", "reading", 45, true, 3));
-    void addCompletedSession(createDemoSession("cookie", "revision", 30, true, 5));
-    void recordStreakCheckIn();
+
+    void (async () => {
+      // The first one is dated today so the daily goal can actually be reached
+      // from the developer tools; the others are backdated to build history.
+      const todaysDemo = createDemoSession("cookie", "study", 25, true, 0);
+      await addCompletedSession(todaysDemo);
+      await addCompletedSession(createDemoSession("brownie", "reading", 45, true, 3));
+      await addCompletedSession(createDemoSession("cookie", "revision", 30, true, 5));
+      await awardDailyGoalIfEarned(todaysDemo.durationMinutes);
+      await recordStreakCheckIn();
+    })();
   }
 
   function handleAddDemoExpiredSessions() {

@@ -3,11 +3,17 @@ import {
   collection,
   deleteDoc,
   doc,
+  documentId,
+  endAt,
   getDoc,
+  getDocs,
+  limit,
   onSnapshot,
+  orderBy,
   query,
   serverTimestamp,
   setDoc,
+  startAt,
   updateDoc,
   where,
   type DocumentData,
@@ -505,4 +511,50 @@ export function listenToBlocks(
       onError?.(error);
     },
   );
+}
+
+export type UsernameMatch = { uid: string; username: string };
+
+/**
+ * Prefix search over the public `usernames` registry.
+ *
+ * Firestore has no substring search, but document ids here are the lowercased
+ * name, so an id range query gives a real "starts with" lookup without any
+ * extra index or a third-party search service.
+ */
+export async function searchUsernames(
+  term: string,
+  excludeUid: string,
+  max = 8,
+): Promise<UsernameMatch[]> {
+  const firestore = getOptionalFirestore();
+  const prefix = clip(term, 32).toLowerCase();
+
+  if (!firestore || !prefix) {
+    return [];
+  }
+
+  try {
+    const snapshot = await getDocs(
+      query(
+        collection(firestore, "usernames"),
+        orderBy(documentId()),
+        startAt(prefix),
+        // \uf8ff sorts after any regular character, closing the prefix range.
+        endAt(`${prefix}\uf8ff`),
+        limit(max + 1),
+      ),
+    );
+
+    return snapshot.docs
+      .map((item) => ({
+        uid: typeof item.data().uid === "string" ? item.data().uid : "",
+        username: item.id,
+      }))
+      .filter((match) => match.uid && match.uid !== excludeUid)
+      .slice(0, max);
+  } catch (error) {
+    console.error("Username search failed", error);
+    return [];
+  }
 }

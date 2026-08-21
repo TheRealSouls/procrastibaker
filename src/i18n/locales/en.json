@@ -200,10 +200,10 @@
     "intro": "Add friends by username and see who's put in the most focus time this week.",
     "addHeading": "Add a friend",
     "addLabel": "Friend's username",
-    "addPlaceholder": "Their username",
+    "addPlaceholder": "Search usernames",
     "addButton": "Send request",
     "adding": "Sending...",
-    "addHint": "They need a unique username set on their dashboard to be found.",
+    "addHint": "Start typing a username to find them. Names are letters and numbers only.",
     "msgSent": "Friend request sent!",
     "msgAccepted": "You're now friends. They'd already added you.",
     "msgAlready": "You're already friends with them.",
@@ -223,7 +223,9 @@
     "loadError": "We couldn't load your friends right now. Check your connection and refresh.",
     "outgoingPending_one": "{{count}} request pending.",
     "outgoingPending_other": "{{count}} requests pending.",
-    "noBio": "No bio yet"
+    "noBio": "No bio yet",
+    "viewProfile": "View profile",
+    "noMatches": "No bakers found with that name."
   },
   "gifts": {
     "sendButton": "Send pastry",
@@ -503,6 +505,9 @@
     "zoom": "Zoom",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
-    "aria": "A spiral map of {{count}} completed bakes, growing outwards from your first."
+    "aria": "A spiral map of {{count}} completed bakes, growing outwards from your first.",
+    "share": "Share",
+    "sharing": "Preparing...",
+    "shareError": "We could not build that image. Please try again."
   }
 }
