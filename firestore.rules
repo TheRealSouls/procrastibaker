@@ -173,6 +173,7 @@ service cloud.firestore {
       return data.keys().hasOnly([
           'username',
           'bio',
+          'pastryCounts',
           'weeklyMinutes',
           'weekKey',
           'totalMinutes',
@@ -183,6 +184,8 @@ service cloud.firestore {
         && data.username.size() > 0
         && data.username.size() <= 32
         && (!('bio' in data) || (data.bio is string && data.bio.size() <= 160))
+        && (!('pastryCounts' in data)
+          || (data.pastryCounts is map && data.pastryCounts.size() <= 32))
         && data.weeklyMinutes is number
         && data.weeklyMinutes >= 0
         && data.weekKey is string

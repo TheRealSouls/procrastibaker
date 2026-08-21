@@ -59,6 +59,7 @@ import {
   weekKey,
 } from "../utils/leaderboard";
 import { playFinishSound } from "../utils/finishSound";
+import { countByPastry } from "../utils/crumbMap";
 import { isPastryInSeason } from "../utils/season";
 import { calculateCoins } from "../utils/sessionUtils";
 import {
@@ -235,6 +236,7 @@ export function AppProvider() {
     void upsertLeaderboardStats(userUid, {
       username: leaderboardUsername ?? "Student",
       bio: leaderboardBio ?? "",
+      pastryCounts: countByPastry(completedSessions),
       weeklyMinutes: weeklyFocusMinutes(completedSessions),
       weekKey: weekKey(),
       totalMinutes: totalFocusMinutes(completedSessions),

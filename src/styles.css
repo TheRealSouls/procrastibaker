@@ -16,6 +16,7 @@
   --surface-raised: #fff9e8;
   --surface-sunken: #f1dfb8;
   --surface-highlight: #ffe188;
+  --color-muted: rgba(59, 36, 22, 0.68);
   --color-line: rgba(91, 53, 31, 0.16);
   --color-soft-border: rgba(91, 53, 31, 0.18);
   --color-soft-shadow: rgba(91, 53, 31, 0.14);
@@ -166,7 +167,7 @@ h2 {
 
 p {
   line-height: 1.6;
-  color: rgba(59, 36, 22, 0.72);
+  color: var(--color-muted);
 }
 
 input {
@@ -282,7 +283,7 @@ label,
 }
 
 .brand small {
-  color: rgba(59, 36, 22, 0.64);
+  color: var(--color-muted);
 }
 
 .app-wordmark {
@@ -655,7 +656,7 @@ label,
   gap: 0.75rem;
   align-items: center;
   margin: 1rem 0;
-  color: rgba(59, 36, 22, 0.62);
+  color: var(--color-muted);
   font-size: 0.9rem;
   font-weight: 900;
 }
@@ -851,7 +852,7 @@ label,
   /* Sat directly under the input on a negative margin, which read as cramped.
      Give the hint room to breathe away from the field it describes. */
   margin: 0.6rem 0 0;
-  color: rgba(59, 36, 22, 0.62);
+  color: var(--color-muted);
   font-size: 0.85rem;
   font-weight: 700;
   line-height: 1.4;
@@ -890,7 +891,7 @@ label,
 .quiet-text {
   margin-bottom: 0.5rem;
   font-weight: 800;
-  color: rgba(59, 36, 22, 0.64);
+  color: var(--color-muted);
 }
 
 .dashboard-actions {
@@ -1032,7 +1033,7 @@ label,
 
 .streak-card__meta dt,
 .streak-freeze-card__meta dt {
-  color: rgba(59, 36, 22, 0.6);
+  color: var(--color-muted);
   font-size: 0.85rem;
   font-weight: 800;
 }
@@ -1089,7 +1090,7 @@ label,
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 800;
-  color: rgba(59, 36, 22, 0.68);
+  color: var(--color-muted);
 }
 
 .metric-card strong {
@@ -1538,7 +1539,7 @@ label,
 
 .button[aria-disabled="true"],
 .pastry-choice[aria-disabled="true"] {
-  color: rgba(59, 36, 22, 0.72);
+  color: var(--color-muted);
   background: #f3eadb;
 }
 
@@ -1563,7 +1564,7 @@ label,
 }
 
 .pastry-choice small {
-  color: rgba(59, 36, 22, 0.66);
+  color: var(--color-muted);
   font-weight: 800;
 }
 
@@ -2428,7 +2429,7 @@ label,
 }
 
 .section-title-row span {
-  color: rgba(59, 36, 22, 0.64);
+  color: var(--color-muted);
   font-weight: 800;
 }
 
@@ -2455,7 +2456,7 @@ label,
 .session-card time {
   display: block;
   margin-top: 0.35rem;
-  color: rgba(59, 36, 22, 0.62);
+  color: var(--color-muted);
   font-weight: 800;
 }
 
@@ -2663,7 +2664,7 @@ label,
 
 .shop-card__meta dt {
   margin-bottom: 0.25rem;
-  color: rgba(59, 36, 22, 0.64);
+  color: var(--color-muted);
   font-weight: 800;
 }
 
@@ -2752,7 +2753,7 @@ label,
 .developer-tools summary {
   width: fit-content;
   cursor: var(--cursor-interactive);
-  color: rgba(59, 36, 22, 0.72);
+  color: var(--color-muted);
   font-weight: 800;
 }
 
@@ -2774,7 +2775,7 @@ label,
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 800;
-  color: rgba(59, 36, 22, 0.68);
+  color: var(--color-muted);
 }
 
 .stat-card__value-row {
@@ -3216,7 +3217,7 @@ button:disabled,
 
 .landing-nav__links {
   gap: 1.85rem;
-  color: rgba(59, 36, 22, 0.74);
+  color: var(--color-muted);
   font-size: 0.92rem;
   font-weight: 900;
 }
@@ -3271,7 +3272,7 @@ button:disabled,
 .landing-hero__subtitle {
   max-width: 610px;
   margin-bottom: 1.25rem;
-  color: rgba(59, 36, 22, 0.76);
+  color: var(--color-muted);
   font-size: clamp(1.05rem, 2vw, 1.28rem);
 }
 
@@ -3706,7 +3707,7 @@ button:disabled,
 }
 
 .landing-metric-card span {
-  color: rgba(59, 36, 22, 0.7);
+  color: var(--color-muted);
   font-weight: 900;
 }
 
@@ -3762,7 +3763,7 @@ button:disabled,
 }
 
 .landing-testimonial-card small {
-  color: rgba(59, 36, 22, 0.62);
+  color: var(--color-muted);
   font-weight: 900;
 }
 
@@ -3820,7 +3821,7 @@ button:disabled,
 }
 
 .landing-stat-preview-header span {
-  color: rgba(59, 36, 22, 0.58);
+  color: var(--color-muted);
   font-size: 0.82rem;
   font-weight: 900;
 }
@@ -3834,7 +3835,7 @@ button:disabled,
 
 .landing-stat-bar-row > span,
 .landing-stat-bar-row > strong {
-  color: rgba(59, 36, 22, 0.74);
+  color: var(--color-muted);
   font-size: 0.82rem;
   font-weight: 900;
 }
@@ -3862,7 +3863,7 @@ button:disabled,
 
 .landing-stat-note {
   margin: 0;
-  color: rgba(59, 36, 22, 0.68);
+  color: var(--color-muted);
   font-size: 0.95rem;
 }
 
@@ -3976,7 +3977,7 @@ button:disabled,
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  color: rgba(59, 36, 22, 0.76);
+  color: var(--color-muted);
   font-weight: 900;
 }
 
@@ -4198,7 +4199,7 @@ button:disabled,
 
   .mobile-topbar small {
     font-weight: 900;
-    color: rgba(59, 36, 22, 0.68);
+    color: var(--color-muted);
   }
 
   .mobile-sign-out {
@@ -5692,7 +5693,7 @@ button:disabled,
 
 .friend-profile__stats dt {
   margin-bottom: 0.2rem;
-  color: rgba(59, 36, 22, 0.64);
+  color: var(--color-muted);
   font-size: 0.78rem;
   font-weight: 800;
 }
@@ -5994,4 +5995,209 @@ textarea:focus-visible,
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ---------- Dark mode contrast ---------- */
+/* The palette above got the big surfaces right, but a lot of chrome was painted
+   with literal near-white overlays and dark-brown text at partial alpha, which
+   turns either invisible or muddy on a dark page. These target those. */
+:root[data-theme="dark"] {
+  /* Secondary text: bright enough to clear WCAG AA against the dark surfaces. */
+  --color-muted: rgba(246, 236, 223, 0.78);
+}
+
+/* Cards were stacked with white gradient overlays; flatten them to real
+   surfaces so statistics and study-stats boxes stop looking grey. */
+:root[data-theme="dark"] .metric-card,
+:root[data-theme="dark"] .stat-card,
+:root[data-theme="dark"] .landing-metric-card,
+:root[data-theme="dark"] .timer-progress-card,
+:root[data-theme="dark"] .daily-goal-card,
+:root[data-theme="dark"] .streak-card,
+:root[data-theme="dark"] .todo-card,
+:root[data-theme="dark"] .account-section,
+:root[data-theme="dark"] .shop-card,
+:root[data-theme="dark"] .oven-card {
+  background:
+    linear-gradient(135deg, rgba(255, 214, 130, 0.07), rgba(255, 214, 130, 0.03)),
+    var(--surface-card);
+  border-color: var(--color-line);
+}
+
+/* A warm amber tint instead of grey, which reads as "bakery" rather than
+   "disabled". */
+:root[data-theme="dark"] .stat-card > span,
+:root[data-theme="dark"] .metric-card span,
+:root[data-theme="dark"] .friend-profile__stats dt,
+:root[data-theme="dark"] .shop-card__meta dt {
+  color: rgba(255, 214, 130, 0.82);
+}
+
+:root[data-theme="dark"] .stat-card strong,
+:root[data-theme="dark"] .metric-card strong,
+:root[data-theme="dark"] .friend-profile__stats dd,
+:root[data-theme="dark"] .shop-card__meta dd {
+  color: var(--color-brown);
+}
+
+/* Landing copy sat at 76% brown, effectively unreadable in dark. */
+:root[data-theme="dark"] .landing-hero__subtitle,
+:root[data-theme="dark"] .landing-section__heading p,
+:root[data-theme="dark"] .landing-step-card p,
+:root[data-theme="dark"] .landing-feature-card p,
+:root[data-theme="dark"] .landing-footer__brand p,
+:root[data-theme="dark"] .dashboard-hero p,
+:root[data-theme="dark"] .page-heading p,
+:root[data-theme="dark"] .account-section p,
+:root[data-theme="dark"] .todo-empty,
+:root[data-theme="dark"] label,
+:root[data-theme="dark"] .account-field,
+:root[data-theme="dark"] .account-toggle span {
+  color: var(--color-brown);
+}
+
+/* GitHub link and developer tools were near-black on near-black. */
+:root[data-theme="dark"] .sidebar-github,
+:root[data-theme="dark"] .developer-tools,
+:root[data-theme="dark"] .developer-tools summary {
+  border-color: var(--color-soft-border);
+  background: var(--surface-raised);
+  color: var(--color-brown);
+}
+
+:root[data-theme="dark"] .sidebar-github:hover {
+  background: var(--surface-highlight);
+  color: var(--color-brown);
+}
+
+:root[data-theme="dark"] .developer-tools .button {
+  background: var(--surface-card);
+  border-color: var(--color-soft-border);
+  color: var(--color-brown);
+}
+
+/* Headings and links keep their warmth without going dim. */
+:root[data-theme="dark"] h1,
+:root[data-theme="dark"] h2,
+:root[data-theme="dark"] h3,
+:root[data-theme="dark"] .landing-kicker,
+:root[data-theme="dark"] .app-wordmark {
+  color: var(--color-cocoa);
+}
+
+:root[data-theme="dark"] a {
+  color: var(--color-caramel);
+}
+
+:root[data-theme="dark"] .tag-pill {
+  color: var(--color-brown);
+}
+
+/* ---------- Crumb Map ---------- */
+.crumb-map {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.2rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(rgba(91, 53, 31, 0.05) 1px, transparent 1.15px) 0 0 / 18px 18px,
+    var(--surface-card);
+  box-shadow: var(--shadow-soft);
+}
+
+.crumb-map__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.crumb-map__title {
+  margin: 0;
+  font-family: var(--font-wordmark);
+}
+
+.crumb-map__count {
+  margin: 0.15rem 0 0;
+  color: var(--color-muted);
+  font-weight: 700;
+}
+
+.crumb-map__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.crumb-map__select {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-soft-white);
+  color: var(--color-cocoa);
+  font: inherit;
+}
+
+.crumb-map__zoom {
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.crumb-map__zoom .button {
+  padding: 0.4rem 0.6rem;
+}
+
+/* The canvas is scaled, so the viewport both clips it and provides the pan. */
+.crumb-map__viewport {
+  overflow: auto;
+  display: grid;
+  place-items: center;
+  min-height: 200px;
+  max-height: 460px;
+  padding: 1rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+.crumb-map--compact .crumb-map__viewport {
+  max-height: 240px;
+  min-height: 140px;
+}
+
+.crumb-map__canvas {
+  position: relative;
+  flex-shrink: 0;
+  transform-origin: center center;
+  transition: transform 0.18s ease;
+}
+
+.crumb-map__tile {
+  position: absolute;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.crumb-map--empty {
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crumb-map__canvas {
+    transition: none;
+  }
+}
+
+:root[data-theme="dark"] .crumb-map {
+  background:
+    radial-gradient(rgba(246, 236, 223, 0.05) 1px, transparent 1.15px) 0 0 / 18px 18px,
+    var(--surface-card);
+}
+
+:root[data-theme="dark"] .crumb-map__viewport {
+  background: var(--surface-sunken);
 }

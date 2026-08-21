@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { CrumbMap } from "../components/CrumbMap";
 import { EmptyState } from "../components/EmptyState";
 import { PastryVisual } from "../components/PastryVisual";
 import { SessionCard } from "../components/SessionCard";
@@ -44,6 +45,8 @@ export function BakeryView({ state }: BakeryViewProps) {
         </EmptyState>
       ) : (
         <>
+          <CrumbMap sessions={state.completedSessions} />
+
           <section className="bakery-case" aria-labelledby="pastry-groups">
             <h2 id="pastry-groups">{t("bakery.displayCase")}</h2>
             <div className="shelf-grid">

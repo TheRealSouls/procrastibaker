@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useApp } from "../context/AppContext";
 import type { LeaderboardEntry, ReportReason } from "../services/friendService";
+import { CrumbMap } from "./CrumbMap";
 import { formatMinutes } from "../utils/sessionUtils";
 import fireSprite from "../media/sprites/fire.png";
 
@@ -116,6 +117,12 @@ export function FriendProfileModal({
                 {notice}
               </p>
             )}
+
+            <CrumbMap
+              compact
+              counts={entry?.pastryCounts ?? {}}
+              title={t("crumbMap.friendTitle", { name: username })}
+            />
 
             <div className="friend-profile__safety">
               <button

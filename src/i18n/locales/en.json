@@ -465,7 +465,8 @@
     "showTodoToggle": "Show the to-do list on the dashboard",
     "todoPositionLabel": "To-do list position",
     "todoTop": "Near the top",
-    "todoBottom": "At the bottom"
+    "todoBottom": "At the bottom",
+    "todoWhileBakingToggle": "Show the to-do list while studying"
   },
   "profile": {
     "noBio": "This baker has not written a bio yet.",
@@ -490,5 +491,18 @@
     "confirmBlock": "Block them",
     "blocking": "Blocking...",
     "blockFailed": "We could not block them. Please try again."
+  },
+  "crumbMap": {
+    "title": "Your Crumb Map",
+    "friendTitle": "{{name}}'s Crumb Map",
+    "empty": "Finish a session and your first crumb appears here.",
+    "tileCount_one": "{{count}} bake",
+    "tileCount_other": "{{count}} bakes",
+    "allTime": "All time",
+    "period": "Period",
+    "zoom": "Zoom",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "aria": "A spiral map of {{count}} completed bakes, growing outwards from your first."
   }
 }

@@ -10,6 +10,8 @@ export type Preferences = {
   finishSound: boolean;
   todoPosition: TodoPosition;
   showTodo: boolean;
+  // Keeps the list visible on the timer screen while a bake runs.
+  todoWhileBaking: boolean;
 };
 
 const STORAGE_KEY = "procrastibaker.preferences";
@@ -20,6 +22,7 @@ const DEFAULTS: Preferences = {
   finishSound: true,
   todoPosition: "top",
   showTodo: true,
+  todoWhileBaking: false,
 };
 
 export function loadPreferences(): Preferences {
@@ -40,6 +43,7 @@ export function loadPreferences(): Preferences {
       finishSound: parsed?.finishSound !== false,
       todoPosition: parsed?.todoPosition === "bottom" ? "bottom" : "top",
       showTodo: parsed?.showTodo !== false,
+      todoWhileBaking: parsed?.todoWhileBaking === true,
     };
   } catch {
     return { ...DEFAULTS };

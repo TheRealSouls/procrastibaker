@@ -33,6 +33,9 @@ export type LeaderboardStats = {
   // Mirrored from the private profile so confirmed friends can read it here,
   // rather than opening up the whole user document.
   bio: string;
+  // Totals per pastry id. Enough to draw their Crumb Map; individual sessions
+  // stay private.
+  pastryCounts: Record<string, number>;
   weeklyMinutes: number;
   weekKey: string;
   totalMinutes: number;
@@ -275,6 +278,7 @@ export async function upsertLeaderboardStats(
     await setDoc(doc(firestore, "leaderboardStats", uid), {
       username: clip(stats.username, 32) || "Student",
       bio: clip(stats.bio ?? "", 160),
+      pastryCounts: stats.pastryCounts ?? {},
       weeklyMinutes: Math.max(0, Math.floor(stats.weeklyMinutes)),
       weekKey: clip(stats.weekKey, 10),
       totalMinutes: Math.max(0, Math.floor(stats.totalMinutes)),
@@ -350,6 +354,10 @@ function normalizeStats(value: Record<string, unknown>): LeaderboardStats | null
   return {
     username: value.username,
     bio: typeof value.bio === "string" ? value.bio.slice(0, 160) : "",
+    pastryCounts:
+      typeof value.pastryCounts === "object" && value.pastryCounts !== null
+        ? (value.pastryCounts as Record<string, number>)
+        : {},
     weeklyMinutes: toNonNegativeInt(value.weeklyMinutes),
     weekKey: typeof value.weekKey === "string" ? value.weekKey : "",
     totalMinutes: toNonNegativeInt(value.totalMinutes),

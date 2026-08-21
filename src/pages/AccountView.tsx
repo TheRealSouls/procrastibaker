@@ -395,6 +395,17 @@ export function AccountView() {
             <label className="account-field" htmlFor="todo-position">
               {t("account.todoPositionLabel")}
             </label>
+            <label className="account-toggle">
+              <input
+                checked={preferences.todoWhileBaking}
+                onChange={(event) =>
+                  updatePreferences({ todoWhileBaking: event.target.checked })
+                }
+                type="checkbox"
+              />
+              <span>{t('account.todoWhileBakingToggle')}</span>
+            </label>
+
             <select
               className="friend-profile__select"
               id="todo-position"
