@@ -58,6 +58,7 @@ import {
   weeklyFocusMinutes,
   weekKey,
 } from "../utils/leaderboard";
+import { playFinishSound } from "../utils/finishSound";
 import { isPastryInSeason } from "../utils/season";
 import { calculateCoins } from "../utils/sessionUtils";
 import {
@@ -592,6 +593,8 @@ export function AppProvider() {
       });
 
       if (saved) {
+        playFinishSound();
+
         // The freshly baked pastry becomes giftable automatically: giftable
         // stock is derived from completed sessions, so nothing to record here.
 
@@ -667,6 +670,7 @@ export function AppProvider() {
   }
 
   function handleAddDemoCompletedSessions() {
+    playFinishSound();
     void addCompletedSession(createDemoSession("cookie", "study", 25, true, 1));
     void addCompletedSession(createDemoSession("brownie", "reading", 45, true, 3));
     void addCompletedSession(createDemoSession("cookie", "revision", 30, true, 5));
@@ -679,6 +683,7 @@ export function AppProvider() {
   }
 
   function handleFinishTestSession() {
+    playFinishSound();
     const pastry =
       pastries.find((item) => item.id === appState.selectedPastryId) ??
       pastries[0];

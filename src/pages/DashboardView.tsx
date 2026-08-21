@@ -6,6 +6,7 @@ import { ProgressBar } from "../components/ProgressBar";
 import { StatCard } from "../components/StatCard";
 import { StreakBadge } from "../components/StreakBadge";
 import { TodoList } from "../components/TodoList";
+import { usePreferences } from "../hooks/usePreferences";
 import { pastries } from "../data/pastries";
 import {
   dailyGoalRewardCoins,
@@ -55,6 +56,7 @@ export function DashboardView({
   onResetData,
 }: DashboardViewProps) {
   const { t, i18n } = useTranslation();
+  const { preferences } = usePreferences();
   const [username, setUsername] = useState(state.user?.username ?? "");
   const [usernameError, setUsernameError] = useState("");
   const [usernameNotice, setUsernameNotice] = useState("");
@@ -242,7 +244,9 @@ export function DashboardView({
         />
       </section>
 
-      <TodoList uid={state.user?.uid} />
+      {preferences.showTodo && preferences.todoPosition === "top" && (
+        <TodoList uid={state.user?.uid} />
+      )}
 
       <section className="page-card streak-card" aria-labelledby="streak-heading">
         <div className="streak-card__main">
@@ -411,6 +415,10 @@ export function DashboardView({
           )}
         </article>
       </section>
+
+      {preferences.showTodo && preferences.todoPosition === "bottom" && (
+        <TodoList uid={state.user?.uid} />
+      )}
 
       <DeveloperTools
         onAddCoins={onAddCoins}

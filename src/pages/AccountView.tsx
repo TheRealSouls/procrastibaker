@@ -8,6 +8,7 @@ import {
   setAnalyticsOptedOut,
 } from "../services/analytics";
 import { saveReminderSettings } from "../services/reminderSyncService";
+import { usePreferences } from "../hooks/usePreferences";
 import { BIO_MAX_LENGTH } from "../services/userProfileService";
 import {
   loadReminderPrefs,
@@ -34,6 +35,7 @@ export function AccountView() {
     "idle" | "sending" | "sent" | "failed" | "checking" | "still-unverified"
   >("idle");
   const [verifyMessage, setVerifyMessage] = useState("");
+  const { preferences, update: updatePreferences } = usePreferences();
   const [bioDraft, setBioDraft] = useState(appState.user?.bio ?? "");
   const [bioStatus, setBioStatus] = useState<"idle" | "saving" | "saved" | "failed">("idle");
   const user = appState.user;
@@ -345,10 +347,85 @@ export function AccountView() {
         </label>
       </section>
 
+      <section className="page-card account-section">
+        <h2>{t("account.appearanceHeading")}</h2>
+
+        <label className="account-field" htmlFor="theme-select">
+          {t("account.themeLabel")}
+        </label>
+        <select
+          className="friend-profile__select"
+          id="theme-select"
+          onChange={(event) =>
+            updatePreferences({
+              theme: event.target.value as typeof preferences.theme,
+            })
+          }
+          value={preferences.theme}
+        >
+          <option value="system">{t("account.themeSystem")}</option>
+          <option value="light">{t("account.themeLight")}</option>
+          <option value="dark">{t("account.themeDark")}</option>
+        </select>
+
+        <label className="account-toggle">
+          <input
+            checked={preferences.finishSound}
+            onChange={(event) =>
+              updatePreferences({ finishSound: event.target.checked })
+            }
+            type="checkbox"
+          />
+          <span>{t("account.finishSoundToggle")}</span>
+        </label>
+
+        <label className="account-toggle">
+          <input
+            checked={preferences.showTodo}
+            onChange={(event) =>
+              updatePreferences({ showTodo: event.target.checked })
+            }
+            type="checkbox"
+          />
+          <span>{t("account.showTodoToggle")}</span>
+        </label>
+
+        {preferences.showTodo && (
+          <>
+            <label className="account-field" htmlFor="todo-position">
+              {t("account.todoPositionLabel")}
+            </label>
+            <select
+              className="friend-profile__select"
+              id="todo-position"
+              onChange={(event) =>
+                updatePreferences({
+                  todoPosition: event.target
+                    .value as typeof preferences.todoPosition,
+                })
+              }
+              value={preferences.todoPosition}
+            >
+              <option value="top">{t("account.todoTop")}</option>
+              <option value="bottom">{t("account.todoBottom")}</option>
+            </select>
+          </>
+        )}
+      </section>
+
       <ReminderSettings />
 
-      <section className="page-card account-section account-danger">
-        <h2>{t("account.deleteHeading")}</h2>
+      <section
+        aria-labelledby="danger-zone-heading"
+        className="page-card account-section account-danger danger-zone"
+      >
+        <div className="danger-zone__header">
+          <i aria-hidden="true" className="fa-solid fa-triangle-exclamation" />
+          <h2 id="danger-zone-heading">{t("account.dangerZone")}</h2>
+        </div>
+        <p className="danger-zone__lead">{t("account.dangerZoneBody")}</p>
+
+        <h3 className="danger-zone__action">{t("account.deleteHeading")}</h3>
         <p>{t("account.deleteBody")}</p>
 
         {!confirmingDelete ? (

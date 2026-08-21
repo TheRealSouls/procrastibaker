@@ -9,6 +9,7 @@ import { GiftAlertModal } from "./GiftAlertModal";
 import { LofiPlayer } from "./LofiPlayer";
 import { StreakBadge } from "./StreakBadge";
 import { useApp } from "../context/AppContext";
+import { usePreferences } from "../hooks/usePreferences";
 import { useDailyReminder } from "../hooks/useDailyReminder";
 import croissantIcon from "../media/sprites/icon.png";
 import { focusMinutesOnDate } from "../utils/leaderboard";
@@ -28,6 +29,11 @@ export function AppShell() {
     discardActiveSession,
   } = useApp();
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  // Collapsing the bottom bar hands the page back a chunk of vertical space,
+  // which matters most on tall narrow phones.
+  const [navCollapsed, setNavCollapsed] = useState(false);
+  // Applying the theme here covers every signed-in screen.
+  usePreferences();
   const sidebarRef = useRef<HTMLElement | null>(null);
 
   // On narrow screens the sidebar becomes a fixed bottom bar that floats over
@@ -110,7 +116,11 @@ export function AppShell() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${navCollapsed ? " nav-collapsed" : ""}`}>
+      {/* Keyboard and screen-reader users can jump straight past the nav. */}
+      <a className="skip-link" href="#main-content">
+        {t("shell.skipToContent")}
+      </a>
       <div className="mobile-topbar">
         <div>
           <img
@@ -144,6 +154,23 @@ export function AppShell() {
       </div>
 
       <aside className="sidebar" ref={sidebarRef}>
+        <button
+          aria-controls="primary-nav"
+          aria-expanded={!navCollapsed}
+          aria-label={
+            navCollapsed ? t("shell.expandNav") : t("shell.collapseNav")
+          }
+          className="sidebar-collapse"
+          onClick={() => setNavCollapsed((value) => !value)}
+          type="button"
+        >
+          <i
+            aria-hidden="true"
+            className={
+              navCollapsed ? "fa-solid fa-chevron-up" : "fa-solid fa-chevron-down"
+            }
+          />
+        </button>
         <div className="brand">
           <img
             alt=""
@@ -197,7 +224,7 @@ export function AppShell() {
         </a>
       </aside>
 
-      <main className="main-content">
+      <main className="main-content" id="main-content" tabIndex={-1}>
         <EmailVerificationBanner />
         {appStateError && (
           <p className="auth-error" role="alert">

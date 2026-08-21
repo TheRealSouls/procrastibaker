@@ -42,9 +42,6 @@ export function SessionCard({ session, variant }: SessionCardProps) {
           </span>
         </p>
         <time dateTime={session.endedAt}>{formatDate(session.endedAt)}</time>
-        {isExpired && (
-          <p className="expired-copy">{t("sessionCard.expiredCopy")}</p>
-        )}
       </div>
     </article>
   );

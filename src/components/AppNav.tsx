@@ -36,7 +36,7 @@ export function AppNav() {
   const { t } = useTranslation();
 
   return (
-    <nav className="app-nav" aria-label={t("nav.primaryLabel")}>
+    <nav className="app-nav" id="primary-nav" aria-label={t("nav.primaryLabel")}>
       {navItems.map((item) => (
         <NavLink
           className={({ isActive }) =>

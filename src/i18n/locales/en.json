@@ -29,7 +29,10 @@
     "signOutBakingTitle": "Sign out mid-bake?",
     "signOutBakingMsg": "You have a bake in the oven. Signing out now throws the pastry away and records the session as stopped early.",
     "signOutBakingConfirm": "Sign out and bin it",
-    "signOutBakingCancel": "Keep baking"
+    "signOutBakingCancel": "Keep baking",
+    "skipToContent": "Skip to main content",
+    "collapseNav": "Hide navigation",
+    "expandNav": "Show navigation"
   },
   "todos": {
     "heading": "To-do list",
@@ -285,8 +288,7 @@
     "unlockHint": "Complete more study sessions to unlock this pastry."
   },
   "sessionCard": {
-    "planned": "planned",
-    "expiredCopy": "This pastry expired because the session was stopped early. Try finishing your next baking session."
+    "planned": "planned"
   },
   "bakery": {
     "title": "Bakery shelf",
@@ -452,7 +454,19 @@
     "bioCount_other": "{{count}} characters left",
     "bioSaved": "Bio saved!",
     "bioSaving": "Saving...",
-    "bioFailed": "We could not save your bio. Please try again."
+    "bioFailed": "We could not save your bio. Please try again.",
+    "dangerZone": "Danger zone",
+    "dangerZoneBody": "Actions here are permanent and cannot be undone.",
+    "appearanceHeading": "Appearance and app",
+    "themeLabel": "Theme",
+    "themeSystem": "Match my device",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "finishSoundToggle": "Play a sound when a study session finishes",
+    "showTodoToggle": "Show the to-do list on the dashboard",
+    "todoPositionLabel": "To-do list position",
+    "todoTop": "Near the top",
+    "todoBottom": "At the bottom"
   },
   "profile": {
     "noBio": "This baker has not written a bio yet.",
