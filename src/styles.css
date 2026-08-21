@@ -217,7 +217,7 @@ label,
   border-right: 1px solid var(--color-line);
   background:
     radial-gradient(rgba(91, 53, 31, 0.06) 1px, transparent 1.15px) 10px 10px / 18px 18px,
-    linear-gradient(180deg, var(--surface-raised) 0%, #fff2d0 100%);
+    linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-highlight) 100%);
   box-shadow:
     inset -1px 0 0 rgba(255, 215, 106, 0.42),
     4px 0 18px rgba(91, 53, 31, 0.06);
@@ -795,7 +795,9 @@ label,
   padding: 0.1rem 0.45rem;
   border-radius: 999px;
   background: linear-gradient(135deg, #8e5bb5, #6f43a0);
-  color: var(--color-soft-white);
+  /* Literal white, not the token: this pill keeps its purple fill in both
+     themes, and --color-soft-white flips dark, which made it unreadable. */
+  color: #fffaf0;
   font-size: 0.62rem;
   font-weight: 900;
   letter-spacing: 0.04em;
@@ -6200,4 +6202,37 @@ textarea:focus-visible,
 
 :root[data-theme="dark"] .crumb-map__viewport {
   background: var(--surface-sunken);
+}
+
+/* Gold accents keep their bright fill in dark mode, so anything sitting on top
+   of them needs dark ink. --color-cocoa flips to light cream in dark, which left
+   the streak badge and other gold pills as pale text on pale gold. */
+:root[data-theme="dark"] .streak-badge,
+:root[data-theme="dark"] .leaderboard__you,
+:root[data-theme="dark"] .lofi-dock__toggle,
+:root[data-theme="dark"] .nav-button.active,
+:root[data-theme="dark"] .tag-pill.is-selected {
+  color: #241a12;
+}
+
+:root[data-theme="dark"] .streak-badge {
+  background: linear-gradient(180deg, #ffd76a, #e0a83f);
+  border-color: rgba(255, 215, 106, 0.75);
+}
+
+:root[data-theme="dark"] .nav-button.active {
+  background: linear-gradient(180deg, #e8b452, #c98f31);
+  border-color: rgba(255, 215, 106, 0.6);
+}
+
+:root[data-theme="dark"] .nav-button.active .sidebar-icon-fa {
+  color: #241a12;
+}
+
+/* White text on a gold fill measured 1.72 against the honey background, well
+   under the 4.5 needed. These are small badges, so dark ink on the same gold
+   keeps the look while making them legible. Applies in both themes. */
+.leaderboard__you,
+.lofi-dock__toggle {
+  color: #241a12;
 }
