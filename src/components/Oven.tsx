@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { PastryVisual } from "./PastryVisual";
 import { ProgressBar } from "./ProgressBar";
 
@@ -28,10 +29,17 @@ export function Oven({
   const clampedProgress = Math.min(100, Math.max(0, progressPercent));
   const hasRunningTime = status === "active" || status === "paused";
 
+  // "Doneness" (0..1) drives the progressive-baking filter on the oven pastry:
+  // raw/pale while a bake is in progress, fully baked otherwise. Non-baking states
+  // read 1 so the setup preview and finished bake show the pastry at full colour.
+  const doneness =
+    status === "active" || status === "paused" ? clampedProgress / 100 : 1;
+
   return (
     <section
       className={`oven oven--${status}`}
       aria-label={`${pastryName} oven status`}
+      style={{ "--doneness": doneness } as CSSProperties}
     >
       <div className="oven__body">
         <div className="oven__interior">

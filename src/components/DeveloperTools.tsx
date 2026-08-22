@@ -3,6 +3,7 @@ type DeveloperToolsProps = {
   onAddDemoCompletedSessions: () => void;
   onAddDemoExpiredSessions: () => void;
   onFinishTestSession: () => void;
+  onRunLocalMigration: () => void;
   onResetData: () => void;
 };
 
@@ -11,6 +12,7 @@ export function DeveloperTools({
   onAddDemoCompletedSessions,
   onAddDemoExpiredSessions,
   onFinishTestSession,
+  onRunLocalMigration,
   onResetData,
 }: DeveloperToolsProps) {
   return (
@@ -40,6 +42,22 @@ export function DeveloperTools({
         <button className="button" onClick={onFinishTestSession} type="button">
           Finish test study session
         </button>
+        {import.meta.env.DEV && (
+          <button className="button" onClick={onRunLocalMigration} type="button">
+            Run local migration
+          </button>
+        )}
+        {import.meta.env.DEV && (
+          <button
+            className="button"
+            onClick={() => {
+              throw new Error("Sentry test error (Developer Tools)");
+            }}
+            type="button"
+          >
+            Trigger test error
+          </button>
+        )}
       </div>
     </details>
   );

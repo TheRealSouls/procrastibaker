@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { useTranslation } from "react-i18next";
 import { PastryVisual } from "./PastryVisual";
 import { pastries } from "../data/pastries";
 import type { StudySession } from "../types";
@@ -11,6 +12,7 @@ type SessionCardProps = {
 };
 
 export function SessionCard({ session, variant }: SessionCardProps) {
+  const { t } = useTranslation();
   const pastry = pastries.find((item) => item.id === session.pastryId);
   const isExpired = variant === "expired";
 
@@ -34,18 +36,9 @@ export function SessionCard({ session, variant }: SessionCardProps) {
             <span className="tag-dot" aria-hidden="true" />
             <span>{session.tagName}</span>
           </span>
-          <span>
-            {isExpired ? "planned " : ""}
-            {formatMinutes(session.durationMinutes)}
-          </span>
+          {!isExpired && <span>{formatMinutes(session.durationMinutes)}</span>}
         </p>
         <time dateTime={session.endedAt}>{formatDate(session.endedAt)}</time>
-        {isExpired && (
-          <p className="expired-copy">
-            This pastry expired because the session was stopped early. Try
-            finishing your next baking session.
-          </p>
-        )}
       </div>
     </article>
   );

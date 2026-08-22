@@ -1,0 +1,468 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function isOptionalTimestamp(data, field) {
+      return !(field in data) || data[field] is timestamp;
+    }
+
+    function isOptionalCount(data, field) {
+      return !(field in data) || (data[field] is number && data[field] >= 0);
+    }
+
+    function isOptionalShortString(data, field) {
+      return !(field in data) || (data[field] is string && data[field].size() <= 16);
+    }
+
+    function isAudioSettings(value) {
+      return value is map
+        && value.keys().hasOnly(['soundEnabled', 'soundVolume'])
+        && value.keys().hasAll(['soundEnabled', 'soundVolume'])
+        && value.soundEnabled is bool
+        && value.soundVolume is number
+        && value.soundVolume >= 0
+        && value.soundVolume <= 100;
+    }
+
+    function isUserProfile() {
+      let data = request.resource.data;
+
+      return data.keys().hasOnly([
+          'username',
+          'email',
+          'bio',
+          'coins',
+          'selectedPastryId',
+          'unlockedPastryIds',
+          'giftablePastries',
+          'audioSettings',
+          'localStorageMigrated',
+          'streakCount',
+          'streakLongest',
+          'streakLastActiveDate',
+          'streakFreezes',
+          'usernameChangedAt',
+          'dailyGoalMinutes',
+          'dailyGoalRewardedDate',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.username is string
+        && data.username.size() > 0
+        && data.username.size() <= 32
+        && data.email is string
+        && data.email.size() <= 120
+        && (!('bio' in data) || (data.bio is string && data.bio.size() <= 160))
+        && data.coins is number
+        && data.coins >= 0
+        && data.selectedPastryId is string
+        && data.selectedPastryId.size() > 0
+        && data.selectedPastryId.size() <= 64
+        && data.unlockedPastryIds is list
+        && data.unlockedPastryIds.size() > 0
+        && data.unlockedPastryIds.size() <= 32
+        && (!('giftablePastries' in data)
+          || (data.giftablePastries is map
+            && data.giftablePastries.size() <= 32))
+        && isAudioSettings(data.audioSettings)
+        && data.localStorageMigrated is bool
+        && isOptionalCount(data, 'streakCount')
+        && isOptionalCount(data, 'streakLongest')
+        && isOptionalCount(data, 'streakFreezes')
+        && isOptionalShortString(data, 'streakLastActiveDate')
+        && isOptionalTimestamp(data, 'usernameChangedAt')
+        && (!('dailyGoalMinutes' in data)
+          || (data.dailyGoalMinutes is number
+            && data.dailyGoalMinutes >= 10
+            && data.dailyGoalMinutes <= 600))
+        && isOptionalShortString(data, 'dailyGoalRewardedDate')
+        && isOptionalTimestamp(data, 'createdAt')
+        && isOptionalTimestamp(data, 'updatedAt');
+    }
+
+    function isStudySession() {
+      let data = request.resource.data;
+
+      return data.keys().hasOnly([
+          'pastryId',
+          'pastryName',
+          'tagId',
+          'tagName',
+          'tagColor',
+          'durationMinutes',
+          'startedAt',
+          'endedAt',
+          'completed',
+          'expired',
+          'platform',
+          'createdAt'
+        ])
+        && data.pastryId is string
+        && data.pastryId.size() > 0
+        && data.pastryId.size() <= 64
+        && data.pastryName is string
+        && data.pastryName.size() > 0
+        && data.pastryName.size() <= 48
+        && data.tagId is string
+        && data.tagId.size() > 0
+        && data.tagId.size() <= 80
+        && data.tagName is string
+        && data.tagName.size() > 0
+        && data.tagName.size() <= 24
+        && data.tagColor is string
+        && data.tagColor.size() <= 16
+        && data.durationMinutes is number
+        && data.durationMinutes >= 10
+        && data.durationMinutes <= 120
+        && data.startedAt is string
+        && data.startedAt.size() > 0
+        && data.startedAt.size() <= 40
+        && data.endedAt is string
+        && data.endedAt.size() > 0
+        && data.endedAt.size() <= 40
+        && data.completed is bool
+        && data.expired is bool
+        && data.platform in ['web', 'android']
+        && isOptionalTimestamp(data, 'createdAt');
+    }
+
+    function isFriendRequest() {
+      let data = request.resource.data;
+
+      return data.keys().hasOnly([
+          'fromUid',
+          'fromUsername',
+          'toUid',
+          'toUsername',
+          'status',
+          'createdAt'
+        ])
+        && data.fromUid is string
+        && data.fromUid.size() <= 128
+        && data.toUid is string
+        && data.toUid.size() <= 128
+        && data.fromUsername is string
+        && data.fromUsername.size() <= 32
+        && data.toUsername is string
+        && data.toUsername.size() <= 32
+        && data.status in ['pending', 'accepted']
+        && isOptionalTimestamp(data, 'createdAt');
+    }
+
+    // True when the signed-in user has an *accepted* friend link with ownerUid,
+    // in either direction. Used to gate reads of a user's leaderboard entry to
+    // confirmed friends only. Short-circuits so at most 2 lookups run.
+    function isAcceptedFriend(ownerUid) {
+      let viewer = request.auth.uid;
+      let forward =
+        /databases/$(database)/documents/friendRequests/$(viewer + '__' + ownerUid);
+      let backward =
+        /databases/$(database)/documents/friendRequests/$(ownerUid + '__' + viewer);
+
+      return (exists(forward) && get(forward).data.status == 'accepted')
+        || (exists(backward) && get(backward).data.status == 'accepted');
+    }
+
+    function isLeaderboardStats() {
+      let data = request.resource.data;
+
+      return data.keys().hasOnly([
+          'username',
+          'bio',
+          'pastryCounts',
+          'weeklyMinutes',
+          'weekKey',
+          'totalMinutes',
+          'streakCount',
+          'updatedAt'
+        ])
+        && data.username is string
+        && data.username.size() > 0
+        && data.username.size() <= 32
+        && (!('bio' in data) || (data.bio is string && data.bio.size() <= 160))
+        && (!('pastryCounts' in data)
+          || (data.pastryCounts is map && data.pastryCounts.size() <= 32))
+        && data.weeklyMinutes is number
+        && data.weeklyMinutes >= 0
+        && data.weekKey is string
+        && data.weekKey.size() <= 10
+        && data.totalMinutes is number
+        && data.totalMinutes >= 0
+        && data.streakCount is number
+        && data.streakCount >= 0
+        && isOptionalTimestamp(data, 'updatedAt');
+    }
+
+    function isGift() {
+      let data = request.resource.data;
+
+      return data.keys().hasOnly([
+          'fromUid',
+          'fromUsername',
+          'toUid',
+          'toUsername',
+          'pastryId',
+          'status',
+          'thanked',
+          'thanksSeen',
+          'createdAt'
+        ])
+        && (!('thanked' in data) || data.thanked is bool)
+        && (!('thanksSeen' in data) || data.thanksSeen is bool)
+        && data.fromUid is string
+        && data.fromUid.size() <= 128
+        && data.toUid is string
+        && data.toUid.size() <= 128
+        && data.fromUsername is string
+        && data.fromUsername.size() <= 32
+        && data.toUsername is string
+        && data.toUsername.size() <= 32
+        && data.pastryId is string
+        && data.pastryId.size() > 0
+        && data.pastryId.size() <= 64
+        && data.status in ['unclaimed', 'claimed']
+        && isOptionalTimestamp(data, 'createdAt');
+    }
+
+    function isTodo() {
+      let data = request.resource.data;
+
+      return data.keys().hasOnly(['title', 'done', 'createdAt'])
+        && data.title is string
+        && data.title.size() > 0
+        && data.title.size() <= 120
+        && data.done is bool
+        && isOptionalTimestamp(data, 'createdAt');
+    }
+
+    function isStudyTag() {
+      let data = request.resource.data;
+
+      return data.keys().hasOnly([
+          'name',
+          'color',
+          'isDefault',
+          'createdAt'
+        ])
+        && data.name is string
+        && data.name.size() > 0
+        && data.name.size() <= 24
+        && data.color is string
+        && data.color.size() <= 16
+        && data.isDefault is bool
+        && isOptionalTimestamp(data, 'createdAt');
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create, update: if isOwner(uid) && isUserProfile();
+      allow delete: if isOwner(uid);
+
+      match /sessions/{sessionId} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isStudySession();
+        allow delete: if isOwner(uid);
+      }
+
+      match /tags/{tagId} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isStudyTag();
+        allow delete: if isOwner(uid);
+      }
+
+      match /todos/{todoId} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isTodo();
+        allow delete: if isOwner(uid);
+      }
+    }
+
+    // Global username registry: one doc per lowercase name, holding the owner
+    // uid. Create-only (no update) so claiming a name another user already holds
+    // is denied atomically at the database — guaranteeing uniqueness. Owners may
+    // release their own claim when switching names.
+    match /usernames/{name} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid;
+      // A claim whose owner no longer has a profile is orphaned (their account
+      // was deleted). Without this the name stays reserved forever and friend
+      // requests resolve to a dead uid. Uniqueness still holds: a claim with a
+      // live owner can never be taken over.
+      allow update: if request.auth != null
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid
+        && !exists(/databases/$(database)/documents/users/$(resource.data.uid));
+      allow delete: if request.auth != null
+        && resource.data.uid == request.auth.uid;
+    }
+
+    // Friend relationships: one doc per direction, id "<from>__<to>". Either
+    // party can read/delete; only the sender creates a pending request; only the
+    // recipient may flip it to accepted (and nothing else).
+    match /friendRequests/{id} {
+      // The doc id is "<from>__<to>", so a party can be authorised from the id
+      // alone — this also allows a clean "not found" on a missing doc instead of
+      // a permission error (resource.data is null when the doc doesn't exist).
+      allow get: if request.auth != null
+        && request.auth.uid in id.split('__');
+      // Listing is allowed only for queries constrained to the caller (the
+      // client filters by fromUid == me or toUid == me).
+      allow list: if request.auth != null
+        && (resource.data.fromUid == request.auth.uid
+          || resource.data.toUid == request.auth.uid);
+      allow create: if request.auth != null
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.status == 'pending'
+        // Blocking has to actually stick: the recipient blocking this sender
+        // refuses the request outright rather than only hiding it in the UI.
+        && !exists(/databases/$(database)/documents/blocks/$(request.resource.data.toUid + '__' + request.auth.uid))
+        && isFriendRequest();
+      allow update: if request.auth != null
+        && resource.data.toUid == request.auth.uid
+        && resource.data.status == 'pending'
+        && request.resource.data.status == 'accepted'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      allow delete: if request.auth != null
+        && (resource.data.fromUid == request.auth.uid
+          || resource.data.toUid == request.auth.uid);
+    }
+
+    // Public-to-friends leaderboard entries, keyed by uid. Any signed-in user can
+    // `get` a specific entry (friends read each other's by known uid) but the
+    // collection cannot be listed/enumerated. Only the owner writes their own.
+    match /leaderboardStats/{uid} {
+      // Only the owner or a confirmed friend may read an entry (and never list).
+      allow get: if request.auth != null
+        && (request.auth.uid == uid || isAcceptedFriend(uid));
+      allow list: if false;
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && isLeaderboardStats();
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Daily-reminder settings mirrored from the client, keyed by uid, so the
+    // scheduled Cloud Function can deliver reminders as push. Owner reads/writes
+    // enabled/time/timezone; the function manages `lastPushedDate` via the Admin
+    // SDK (which bypasses rules), so it stays optional and read-only to clients
+    // that don't send it.
+    match /reminderSettings/{uid} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly([
+          'enabled', 'time', 'tzOffsetMinutes', 'lastPushedDate', 'updatedAt'
+        ])
+        && request.resource.data.enabled is bool
+        && request.resource.data.time is string
+        && request.resource.data.time.size() <= 5
+        && request.resource.data.tzOffsetMinutes is number
+        && request.resource.data.tzOffsetMinutes >= -840
+        && request.resource.data.tzOffsetMinutes <= 840
+        && isOptionalShortString(request.resource.data, 'lastPushedDate')
+        && isOptionalTimestamp(request.resource.data, 'updatedAt');
+    }
+
+    // FCM device tokens, keyed by uid. Owner-only; a backend reads these with the
+    // Admin SDK (which bypasses rules) to send pushes.
+    match /pushTokens/{uid} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['token', 'platform', 'updatedAt'])
+        && request.resource.data.token is string
+        && request.resource.data.token.size() > 0
+        && request.resource.data.token.size() <= 4096
+        && request.resource.data.platform is string
+        && request.resource.data.platform.size() <= 16
+        && isOptionalTimestamp(request.resource.data, 'updatedAt');
+    }
+
+    // Pastry gifts, one doc per gift (auto-id). Either party can read/delete;
+    // only the sender creates a pending ('unclaimed') gift to a *confirmed friend*;
+    // only the recipient may flip it to 'claimed' (and nothing else). The sender's
+    // coin cost is deducted on their own profile client-side — rules can't verify
+    // payment, but the blast radius is only unlocking a pastry for a confirmed friend.
+    match /gifts/{id} {
+      allow get: if request.auth != null
+        && (resource.data.fromUid == request.auth.uid
+          || resource.data.toUid == request.auth.uid);
+      // Listing is allowed only for queries constrained to the caller (the client
+      // filters by toUid == me).
+      allow list: if request.auth != null
+        && (resource.data.fromUid == request.auth.uid
+          || resource.data.toUid == request.auth.uid);
+      allow create: if request.auth != null
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.status == 'unclaimed'
+        && isAcceptedFriend(request.resource.data.toUid)
+        && isGift();
+      // The recipient may claim it, and may say thanks. The sender may only mark
+      // that they have seen the thanks. Each side is limited to its own fields
+      // so neither can rewrite the gift itself.
+      allow update: if request.auth != null
+        && resource.data.toUid == request.auth.uid
+        && resource.data.status == 'unclaimed'
+        && request.resource.data.status == 'claimed'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      allow update: if request.auth != null
+        && resource.data.toUid == request.auth.uid
+        && request.resource.data.thanked == true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['thanked']);
+      allow update: if request.auth != null
+        && resource.data.fromUid == request.auth.uid
+        && request.resource.data.thanksSeen == true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['thanksSeen']);
+      allow delete: if request.auth != null
+        && (resource.data.fromUid == request.auth.uid
+          || resource.data.toUid == request.auth.uid);
+    }
+
+    // Blocks, one doc per direction, id "<blocker>__<blocked>". Only the blocker
+    // can see or lift their own blocks; the blocked user is never told.
+    match /blocks/{id} {
+      allow get, list: if request.auth != null
+        && resource.data.blockerUid == request.auth.uid;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['blockerUid', 'blockedUid', 'createdAt'])
+        && request.resource.data.blockerUid == request.auth.uid
+        && request.resource.data.blockedUid is string
+        && request.resource.data.blockedUid.size() > 0
+        && request.resource.data.blockedUid.size() <= 128
+        && request.resource.data.blockedUid != request.auth.uid
+        && isOptionalTimestamp(request.resource.data, 'createdAt');
+      allow delete: if request.auth != null
+        && resource.data.blockerUid == request.auth.uid;
+    }
+
+    // Moderation reports are write-only for clients. Nobody can read, edit or
+    // withdraw one from the app, so a reported user cannot find or tamper with
+    // reports about them. Moderators read these with admin credentials.
+    match /reports/{id} {
+      allow read, update, delete: if false;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly([
+          'reporterUid', 'targetUid', 'targetUsername', 'reason', 'details', 'createdAt'
+        ])
+        && request.resource.data.reporterUid == request.auth.uid
+        && request.resource.data.targetUid is string
+        && request.resource.data.targetUid.size() > 0
+        && request.resource.data.targetUid.size() <= 128
+        && request.resource.data.targetUid != request.auth.uid
+        && request.resource.data.targetUsername is string
+        && request.resource.data.targetUsername.size() <= 32
+        && request.resource.data.reason in ['spam', 'abuse', 'inappropriate', 'other']
+        && request.resource.data.details is string
+        && request.resource.data.details.size() <= 500
+        && isOptionalTimestamp(request.resource.data, 'createdAt');
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

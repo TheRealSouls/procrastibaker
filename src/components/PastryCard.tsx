@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { PastryVisual } from "./PastryVisual";
 import type { Pastry } from "../types";
 
@@ -18,6 +19,7 @@ export function PastryCard({
   onSelectPastry,
   pastry,
 }: PastryCardProps) {
+  const { t } = useTranslation();
   const hintId = `${pastry.id}-shop-hint`;
 
   function buyPastry() {
@@ -40,22 +42,33 @@ export function PastryCard({
           pastryName={pastry.name}
         />
         <div>
-          <h2>{pastry.name}</h2>
+          <h2>
+            {pastry.name}
+            {pastry.season && (
+              <span className="seasonal-tag">
+                {t(`stats.season_${pastry.season}`)}
+              </span>
+            )}
+          </h2>
           <p>{pastry.description}</p>
         </div>
       </div>
 
       <dl className="shop-card__meta">
         <div>
-          <dt>Price</dt>
-          <dd>{pastry.price === 0 ? "Free" : `${pastry.price} coins`}</dd>
+          <dt>{t("pastryCard.price")}</dt>
+          <dd>
+            {pastry.price === 0
+              ? t("pastryCard.free")
+              : t("pastryCard.priceCoins", { count: pastry.price })}
+          </dd>
         </div>
         <div>
-          <dt>Status</dt>
+          <dt>{t("pastryCard.status")}</dt>
           <dd
             className={isUnlocked ? "shop-status unlocked" : "shop-status locked"}
           >
-            {isUnlocked ? "Unlocked" : "Locked"}
+            {isUnlocked ? t("pastryCard.unlocked") : t("pastryCard.locked")}
           </dd>
         </div>
       </dl>
@@ -67,7 +80,7 @@ export function PastryCard({
           onClick={() => onSelectPastry(pastry.id)}
           type="button"
         >
-          {isSelected ? "Selected" : "Select pastry"}
+          {isSelected ? t("pastryCard.selected") : t("pastryCard.selectPastry")}
         </button>
       ) : (
         <button
@@ -77,13 +90,13 @@ export function PastryCard({
           onClick={buyPastry}
           type="button"
         >
-          Buy
+          {t("pastryCard.buy")}
         </button>
       )}
 
       {!isUnlocked && !canAfford && (
         <p className="shop-card__hint" id={hintId}>
-          Complete more study sessions to unlock this pastry.
+          {t("pastryCard.unlockHint")}
         </p>
       )}
     </article>

@@ -13,10 +13,12 @@ import type {
   StudyTag,
   User,
 } from "../types";
+import { normalizeGiftablePastries } from "./giftableInventory";
 
 const storageKey = "procrastibaker-app-state";
 const typoStorageKey = "procrastinbaker-app-state";
 const legacyStorageKey = "pastry-focus-app-state";
+export const appStateStorageEvent = "procrastibaker-app-state-changed";
 
 export function createDefaultAppState(): AppState {
   const selectedPastryId =
@@ -27,6 +29,7 @@ export function createDefaultAppState(): AppState {
     unlockedPastryIds: pastries
       .filter((pastry) => pastry.unlockedByDefault)
       .map((pastry) => pastry.id),
+    giftablePastries: {},
     tags: DEFAULT_TAGS,
     completedSessions: [],
     expiredSessions: [],
@@ -60,12 +63,20 @@ export function saveAppState(state: AppState) {
   localStorage.setItem(storageKey, JSON.stringify(state));
   localStorage.removeItem(typoStorageKey);
   localStorage.removeItem(legacyStorageKey);
+  notifyAppStateChanged();
 }
 
 export function resetAppState() {
   localStorage.removeItem(storageKey);
   localStorage.removeItem(typoStorageKey);
   localStorage.removeItem(legacyStorageKey);
+  notifyAppStateChanged();
+}
+
+function notifyAppStateChanged() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(appStateStorageEvent));
+  }
 }
 
 function normalizeAppState(value: unknown, fallback: AppState): AppState {
@@ -91,6 +102,7 @@ function normalizeAppState(value: unknown, fallback: AppState): AppState {
   return {
     user: isUser(value.user) ? normalizeUser(value.user) : fallback.user,
     unlockedPastryIds,
+    giftablePastries: normalizeGiftablePastries(value.giftablePastries),
     completedSessions: Array.isArray(value.completedSessions)
       ? normalizeStudySessions(value.completedSessions, tags)
       : fallback.completedSessions,
@@ -130,9 +142,33 @@ function normalizeUser(user: Record<string, unknown>): User {
     ...(uid ? { uid } : {}),
     username: String(user.username).trim().slice(0, 32),
     email: String(user.email).trim().slice(0, 80),
+    bio: typeof user.bio === "string" ? user.bio.trim().slice(0, 160) : "",
     coins: Math.max(0, Math.floor(Number(user.coins))),
     authProvider,
+    emailVerified: user.emailVerified === true,
+    usernameChangedAt: toNonNegativeInt(user.usernameChangedAt),
+    streakCount: toNonNegativeInt(user.streakCount),
+    streakLongest: toNonNegativeInt(user.streakLongest),
+    streakLastActiveDate: toDateKey(user.streakLastActiveDate),
+    streakFreezes: toNonNegativeInt(user.streakFreezes),
+    dailyGoalMinutes:
+      typeof user.dailyGoalMinutes === "number" &&
+      Number.isFinite(user.dailyGoalMinutes)
+        ? Math.floor(user.dailyGoalMinutes)
+        : 60,
+    dailyGoalRewardedDate: toDateKey(user.dailyGoalRewardedDate),
   };
+}
+
+function toNonNegativeInt(value: unknown): number {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? Math.max(0, Math.floor(numeric)) : 0;
+}
+
+function toDateKey(value: unknown): string {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? value
+    : "";
 }
 
 function normalizeAudioSettings(
@@ -224,7 +260,6 @@ function normalizeStudySession(
 ): StudySession | null {
   if (
     !isRecord(value) ||
-    typeof value.id !== "string" ||
     !isPastryId(value.pastryId) ||
     typeof value.pastryName !== "string" ||
     typeof value.durationMinutes !== "number" ||
@@ -255,7 +290,7 @@ function normalizeStudySession(
       : matchedTag?.color || fallbackTagColor;
 
   return {
-    id: value.id,
+    id: getStoredSessionId(value),
     pastryId: value.pastryId,
     pastryName: value.pastryName,
     tagId:
@@ -268,6 +303,38 @@ function normalizeStudySession(
     completed: value.completed,
     expired: value.expired,
   };
+}
+
+function getStoredSessionId(value: Record<string, unknown>) {
+  const id = typeof value.id === "string" ? value.id.trim().slice(0, 128) : "";
+
+  if (id) {
+    return id;
+  }
+
+  return `local-${hashString(
+    [
+      value.pastryId,
+      value.pastryName,
+      value.tagId,
+      value.tagName,
+      value.durationMinutes,
+      value.startedAt,
+      value.endedAt,
+      value.completed,
+      value.expired,
+    ].join("|"),
+  )}`;
+}
+
+function hashString(value: string) {
+  let hash = 0;
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) | 0;
+  }
+
+  return Math.abs(hash).toString(36);
 }
 
 function isPastryId(value: unknown): value is string {

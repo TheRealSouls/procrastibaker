@@ -1,0 +1,14 @@
+# Copy to android/key.properties and fill in. That file is gitignored: never commit
+# it, and never commit the .jks keystore it points at.
+#
+# Create the keystore first (keep it OUTSIDE this repo, and back it up):
+#   keytool -genkey -v -keystore procrastibaker-upload.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+# storeFile accepts an absolute path, or a path relative to the android/app folder.
+# On Windows either use forward slashes or escape backslashes.
+
+storeFile=C:/Users/you/keys/procrastibaker-upload.jks
+storePassword=your-keystore-password
+keyAlias=upload
+keyPassword=your-key-password

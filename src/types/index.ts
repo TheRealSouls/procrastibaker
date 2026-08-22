@@ -5,7 +5,8 @@ export type View =
   | "timer"
   | "bakery"
   | "shop"
-  | "stats";
+  | "stats"
+  | "feedback";
 
 export type StudyTag = {
   id: string;
@@ -17,10 +18,32 @@ export type StudyTag = {
 export type User = {
   uid?: string;
   username: string;
+  // Empty for anonymous (guest) users, they have no email until they link Google.
   email: string;
   coins: number;
-  authProvider: "local" | "google";
+  authProvider: "local" | "google" | "anonymous" | "email";
+  // Whether the account's email address has been verified. Google accounts are
+  // always verified; email/password accounts start false until they confirm.
+  emailVerified: boolean;
+  // Epoch ms of the last username change, 0 if never changed. Drives the
+  // once-per-week change cooldown in the UI.
+  usernameChangedAt: number;
+  // Short self-description shown on your profile. Mirrored to leaderboardStats
+  // so confirmed friends can read it without access to the whole user doc.
+  bio: string;
+  // Streak (Duolingo-style). streakLastActiveDate is a local "YYYY-MM-DD" key,
+  // "" if no bake has ever been completed.
+  streakCount: number;
+  streakLongest: number;
+  streakLastActiveDate: string;
+  streakFreezes: number;
+  // Daily focus target (minutes) and the last date its coin bonus was awarded
+  // ("YYYY-MM-DD", "" if never).
+  dailyGoalMinutes: number;
+  dailyGoalRewardedDate: string;
 };
+
+export type Season = "autumn" | "december";
 
 export type Pastry = {
   id: string;
@@ -30,6 +53,9 @@ export type Pastry = {
   bakeTimeMultiplier: number;
   unlockedByDefault: boolean;
   description: string;
+  // Seasonal pastries are only offered in the shop during their season; if left
+  // undefined the pastry is available all year round.
+  season?: Season;
 };
 
 export type StudySession = {
@@ -54,6 +80,9 @@ export type AudioSettings = {
 export type AppState = {
   user: User | null;
   unlockedPastryIds: string[];
+  // Baked-pastry stock available to gift, keyed by pastryId. Earned one-per
+  // completed session, spent by gifting to friends.
+  giftablePastries: Record<string, number>;
   tags: StudyTag[];
   completedSessions: StudySession[];
   expiredSessions: StudySession[];
